@@ -1,0 +1,22 @@
+name: geococo_dev
+channels:
+  - conda-forge
+  - fastai
+dependencies:
+  - python
+  - geopandas
+  - rasterio
+  - pydantic
+  - opencv-python-headless
+  - pycocotools
+  - tqdm
+  - pytest
+  - mypy
+  - black
+  - ruff
+  - pip
+  - pip:
+    - fiftyone
+platforms:
+  - linux-64
+  - win-64
