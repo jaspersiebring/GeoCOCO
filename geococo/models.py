@@ -2,6 +2,7 @@ from pydantic import BaseModel
 from dataclasses import dataclass
 from typing import Optional, List, Dict
 from datetime import datetime
+import pathlib
 
 @dataclass
 class WindowSource:
@@ -49,24 +50,16 @@ class Image(BaseModel):
     id: int 
     width: int
     height: int
-    file_name: str
-    license: Optional[int] = None
-    flickr_url: Optional[str] = None
-    coco_url: Optional[str] = None
+    file_name: pathlib.Path
     date_captured: Optional[datetime] = None
-
-class License(BaseModel):
-    id: int
-    name: str
-    url: str
 
 class Annotation(BaseModel):
     id: int
     image_id: int
     category_id: int
     segmentation: Dict
-    area: float
-    bbox: List[float] 
+    area: int
+    bbox: List[int] 
     iscrowd: int
 
 class Category(BaseModel):
@@ -74,9 +67,9 @@ class Category(BaseModel):
     name: str
     supercategory: str
 
+# add read_from and save_as methods
 class CocoDataset(BaseModel):
     info: Info
     images: List[Image]
     annotations: List[Annotation]
     categories: List[Category]
-    licenses: Optional[List[License]] = []

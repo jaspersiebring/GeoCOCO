@@ -32,7 +32,7 @@ def generate_window_offsets(window: Window, window_source: WindowSource) -> np.n
     return window_offsets
 
 
-def window_factory(parent_window: Window, window_source: WindowSource, boundless: bool = False) -> Generator[Window, None, None]:
+def window_factory(parent_window: Window, window_source: WindowSource, boundless: bool = True) -> Generator[Window, None, None]:
     """
     Generator that produces rasterio.Window objects in predetermined steps, within the given Window.
 
@@ -46,10 +46,10 @@ def window_factory(parent_window: Window, window_source: WindowSource, boundless
     
     for col_off, row_off in window_offsets:
         child_window = Window(
-            col_off=col_off,
-            row_off=row_off,
-            width=window_source.width_window_pixels,
-            height=window_source.height_window_pixels,
+            col_off=int(col_off),
+            row_off=int(row_off),
+            width=int(window_source.width_window_pixels),
+            height=int(window_source.height_window_pixels),
         )
         if not boundless:
             child_window = child_window.intersection(parent_window)
