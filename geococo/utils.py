@@ -3,7 +3,7 @@ import geopandas as gpd
 from geococo.models import WindowSource
 from rasterio.windows import Window
 import numpy as np
-from typing import Generator, Tuple, Optional, List
+from typing import Generator, Tuple, Optional, List, Dict
 
 
 def generate_window_offsets(window: Window, window_source: WindowSource) -> np.ndarray:
@@ -16,12 +16,12 @@ def generate_window_offsets(window: Window, window_source: WindowSource) -> np.n
     """
 
     col_range = np.arange(
-        max(0, window.col_off - window_source.width_overlap_pixels),
+        np.max((0, window.col_off - window_source.width_overlap_pixels)),
         window.width + window.col_off - window_source.width_overlap_pixels,
         window_source.width_step_pixels
     )
     row_range = np.arange(
-        max(0, window.row_off - window_source.height_overlap_pixels),
+        np.max((0, window.row_off - window_source.height_overlap_pixels)),
         window.height + window.row_off - window_source.height_overlap_pixels,
         window_source.height_step_pixels
     )
@@ -107,4 +107,4 @@ def estimate_window_source(gdf: gpd.GeoDataFrame, src: DatasetReader, quantile :
     if window_source is None:
         raise ValueError(f"No WindowSource objects could be created from the given window_bounds {window_bounds}, raising last Exception..") from last_exception
 
-    return window_source 
+    return window_source
