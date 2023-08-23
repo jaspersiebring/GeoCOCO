@@ -1,5 +1,7 @@
+from pydantic import BaseModel
 from dataclasses import dataclass
-
+from typing import Optional, List, Dict
+from datetime import datetime
 
 @dataclass
 class WindowSource:
@@ -33,3 +35,48 @@ class WindowSource:
             raise ValueError(
                 f"height_step_pixels ({self.height_step_pixels}) must be positive, increase height_window_pixels ({self.height_overlap_pixels}) or decrease height_overlap_pixels ({self.height_overlap_pixels})"
             )
+        
+
+class Info(BaseModel):
+    year: Optional[int] = None
+    version: Optional[str] = None
+    description: Optional[str] = None
+    contributor: Optional[str] = None
+    url: Optional[str] = None
+    date_created: Optional[datetime] = None
+
+class Image(BaseModel):
+    id: int 
+    width: int
+    height: int
+    file_name: str
+    license: Optional[int] = None
+    flickr_url: Optional[str] = None
+    coco_url: Optional[str] = None
+    date_captured: Optional[datetime] = None
+
+class License(BaseModel):
+    id: int
+    name: str
+    url: str
+
+class Annotation(BaseModel):
+    id: int
+    image_id: int
+    category_id: int
+    segmentation: Dict
+    area: float
+    bbox: List[float] 
+    iscrowd: int
+
+class Category(BaseModel):
+    id: int
+    name: str
+    supercategory: str
+
+class CocoDataset(BaseModel):
+    info: Info
+    images: List[Image]
+    annotations: List[Annotation]
+    categories: List[Category]
+    licenses: Optional[List[License]] = []
