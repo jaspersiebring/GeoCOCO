@@ -1,9 +1,10 @@
 from rasterio.io import DatasetReader
 import geopandas as gpd
-from geococo.models import WindowSource
+from geococo.models import WindowSource, CocoDataset
 from rasterio.windows import Window
 import numpy as np
 from typing import Generator, Tuple, Optional, List, Dict
+import pathlib
 
 
 def generate_window_offsets(window: Window, window_source: WindowSource) -> np.ndarray:
@@ -108,3 +109,13 @@ def estimate_window_source(gdf: gpd.GeoDataFrame, src: DatasetReader, quantile :
         raise ValueError(f"No WindowSource objects could be created from the given window_bounds {window_bounds}, raising last Exception..") from last_exception
 
     return window_source
+
+def dump_dataset(dataset: CocoDataset, json_path: pathlib.Path) -> None:
+    with open(json_path, 'w') as dst:
+        dst.write(dataset.model_dump_json())
+
+def load_dataset(json_path: pathlib.Path) -> CocoDataset:    
+    # TODO add cocomask.decode(rle) for segmentation entries
+    dataset = CocoDataset.parse_file(json_path)
+    return dataset
+

@@ -102,6 +102,10 @@ def test_generate_window_offsets_larger_window():
     n_height_steps = np.ceil((parent_window.height + parent_window.row_off) / window_source.height_step_pixels)
     assert offsets.shape[0] == n_width_steps * n_height_steps
     
+
+#TODO
+# add test for window_factory that checks if boundless leads to non-int vals 
+
 def test_window_factory_len():
     parent_window = Window(0, 0, 1000, 1000)
     window_source = WindowSource(100, 0, 100, 0)

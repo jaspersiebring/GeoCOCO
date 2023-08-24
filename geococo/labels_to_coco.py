@@ -14,8 +14,9 @@ from rasterio.transform import array_bounds
 from rasterio.windows import Window
 from shapely.geometry import box
 from tqdm import tqdm
-from geococo.models import Annotation, Category, CocoDataset, Image, Info, License, WindowSource
-from geococo.utils import estimate_window_source, generate_window_offsets, window_factory
+from geococo.models import Annotation, Category, CocoDataset, Image, Info, WindowSource
+from geococo.utils import estimate_window_source, generate_window_offsets, window_factory, dump_dataset, load_dataset
+
 
 def populate_coco_dataset(dataset: CocoDataset, images_dir: pathlib.Path, src: DatasetReader, labels: gpd.GeoDataFrame, window_bounds:  List[Tuple[int, int]]) -> CocoDataset:
     image_ids = [image.id for image in dataset.images]
@@ -99,7 +100,7 @@ def populate_coco_dataset(dataset: CocoDataset, images_dir: pathlib.Path, src: D
                 bounding_box = cv2.boundingRect(intersected_mask.astype("uint8"))
                 area = np.sum(intersected_mask)
                 category_id = intersecting_label['category_id']
-                
+                iscrowd = 0 # TODO determined by multipolygon
                 annotation_instance = Annotation(
                     id=next_annotation_id,
                     image_id = next_image_id,
@@ -107,7 +108,7 @@ def populate_coco_dataset(dataset: CocoDataset, images_dir: pathlib.Path, src: D
                     segmentation=rle,
                     area=area,
                     bbox = bounding_box,
-                    iscrowd=0)
+                    iscrowd=iscrowd)
                 
                 annotation_instance
                 dataset.annotations.append(annotation_instance)
@@ -117,3 +118,56 @@ def populate_coco_dataset(dataset: CocoDataset, images_dir: pathlib.Path, src: D
         geoms.append(window_geom)
 
     return dataset, geoms
+
+
+    
+if __name__ == "__main__":
+    image_path = pathlib.Path("D:/repos/GeoCOCO/data/image.tif")
+    label_path = pathlib.Path("D:/repos/GeoCOCO/data/labels.shp")
+    
+    labels: gpd.GeoDataFrame = gpd.read_file(label_path)
+    labels['category_id'] = np.random.randint(1, 10, labels.shape[0]) #faking categories
+    src: DatasetReader = rasterio.open(image_path)
+    
+    window_bounds = [(256, 256), (512, 512)]
+    raster_bounds = gpd.GeoSeries(box(*src.bounds), crs=src.crs)
+    label_bounds = gpd.GeoSeries(box(*labels.total_bounds), crs=labels.crs)
+        
+    if not src.crs.to_string() == labels.crs.to_string():
+        raise ValueError("Projection of given spatial objects don't match, exiting..")
+
+    #check for overlapping bounds (requirement)
+    if not all(raster_bounds.intersects(label_bounds)):
+        raise ValueError("There's no overlap between input objects, exiting..")
+
+
+    output_dir_str = tempfile.TemporaryDirectory(prefix=f"output_{uuid.uuid4()}")
+    output_dir = pathlib.Path(output_dir_str.name)
+
+    print(output_dir)
+
+    # Instancing new dataset
+    info = Info(version = "0.0.1", date_created=datetime.now())
+    dataset = CocoDataset(
+        info=info,
+        images = [],
+        annotations = [],
+        categories=[]
+        )
+
+    
+    dataset, geoms = populate_coco_dataset(
+        dataset = dataset, 
+        images_dir = output_dir,
+        src = src,
+        labels = labels,
+        window_bounds = window_bounds
+        )
+    
+    
+    gpd_path = output_dir / "geoms.shp"
+    gpd.GeoDataFrame(geometry = geoms, crs = src.crs).to_file(gpd_path)
+    
+        
+    json_path = output_dir / "first_dataset.json"
+    dump_dataset(dataset=dataset, json_path=json_path)

@@ -1,4 +1,5 @@
-from geococo.models import WindowSource
+from datetime import datetime
+from geococo.models import WindowSource, Annotation, Category, CocoDataset, Image, License, Info
 import pytest
 
 
@@ -112,5 +113,3 @@ def test_overlap_bigger_than_window_window_source():
                     height_window_pixels=height_window_pixels,
                     height_overlap_pixels=height_overlap_pixels
                 )
-
-
