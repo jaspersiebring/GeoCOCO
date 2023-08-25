@@ -11,7 +11,9 @@ from rasterio.io import DatasetReader
 from rasterio.mask import mask as riomask
 from shapely.geometry import box
 from tqdm import tqdm
-from geococo.models import Annotation, Category, CocoDataset, Image, Info
+from geococo.coco_models import Annotation
+from geococo.coco_models import Category
+from geococo.coco_models import CocoDataset, Image, Info
 from geococo.utils import estimate_window_source, generate_window_offsets, window_factory, generate_window_polygon, reshape_image, process_label_mask
 
 

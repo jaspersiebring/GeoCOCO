@@ -1,5 +1,4 @@
-from datetime import datetime
-from geococo.models import WindowSource, Annotation, Category, CocoDataset, Image, License, Info
+from geococo.models import WindowSource
 import pytest
 
 
