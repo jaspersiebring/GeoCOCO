@@ -1,10 +1,67 @@
-from rasterio.io import DatasetReader
+from typing import Generator, List, Optional, Tuple, Dict
 import geopandas as gpd
-from geococo.models import WindowSource, CocoDataset
-from rasterio.windows import Window
 import numpy as np
-from typing import Generator, Tuple, Optional, List, Dict
-import pathlib
+from rasterio.io import DatasetReader
+from rasterio.transform import array_bounds
+from rasterio.windows import Window
+from shapely.geometry import box
+from shapely.geometry.polygon import Polygon
+from geococo.models import WindowSource
+from numpy.ma import MaskedArray
+from pycocotools import mask as cocomask
+
+
+def process_label_mask(label_mask: MaskedArray) -> Tuple[Dict, List[int], int]:
+    """
+    Generates all necessary values for a COCO Annotation
+
+    :param label_mask: A binary mask for an intersected label
+    :return: RLE-encoded annotations and their bounds/total area
+    """
+
+    label_mask = np.all(label_mask.mask, axis=0)
+    label_mask = np.invert(label_mask)
+    rle = cocomask.encode(np.asfortranarray(label_mask))
+    bounding_box = cv2.boundingRect(label_mask.astype(np.uint8))
+    area = np.sum(label_mask)
+
+    return rle, bounding_box, area
+
+
+def reshape_image(img_array: np.ndarray, shape: Tuple[int, int, int], padding_value: int = 0) -> np.ndarray:
+    """
+    Reshapes numpy array to match given shape, done through slicing or padding. 
+
+    :param img_array: the numpy array to be reshaped 
+    :param shape: the desired shape (bands, rows, cols)
+    :param padding_value: what value to pad img_array with (if too small)
+    :return: numpy array in desired shape 
+    """
+
+    if len(img_array.shape) != len(shape):
+        raise ValueError(f"Number of dimensions have to match ({img_array.shape} != {shape})")
+    
+    img_array = img_array[:shape[0], :shape[1], :shape[2]]
+    img_pads = [(0, max(0, n - img_array.shape[i])) for i, n in enumerate(shape)]
+    img_array = np.pad(img_array, img_pads, mode='constant', constant_values=padding_value)
+    
+    return img_array
+
+
+def generate_window_polygon(datasource: DatasetReader, window: Window) -> Polygon:
+    """
+    Turns the spatial bounds of a given window to a shapely.Polygon 
+    object in a given dataset's CRS.
+    
+    :param datasource: a rasterio DatasetReader object that provides the affine transformation
+    :param window: bounds to represent as Polygon
+    :return: shapely Polygon representing the spatial bounds of a given window in a given CRS
+    """
+
+    window_transform = datasource.window_transform(window)
+    window_bounds = array_bounds(window.height, window.width, window_transform)
+    window_poly = box(*window_bounds)
+    return window_poly
 
 
 def generate_window_offsets(window: Window, window_source: WindowSource) -> np.ndarray:
@@ -101,6 +158,8 @@ def estimate_window_source(gdf: gpd.GeoDataFrame, src: DatasetReader, quantile :
                 width_overlap_pixels=width_overlap_pixels,
                 height_window_pixels=height_pixels,
                 height_overlap_pixels=height_overlap_pixels)
+            break  # Break the loop as soon as a valid window_source is found
+        
         except ValueError as ve:
             last_exception = ve
             continue
@@ -109,13 +168,3 @@ def estimate_window_source(gdf: gpd.GeoDataFrame, src: DatasetReader, quantile :
         raise ValueError(f"No WindowSource objects could be created from the given window_bounds {window_bounds}, raising last Exception..") from last_exception
 
     return window_source
-
-def dump_dataset(dataset: CocoDataset, json_path: pathlib.Path) -> None:
-    with open(json_path, 'w') as dst:
-        dst.write(dataset.model_dump_json())
-
-def load_dataset(json_path: pathlib.Path) -> CocoDataset:    
-    # TODO add cocomask.decode(rle) for segmentation entries
-    dataset = CocoDataset.parse_file(json_path)
-    return dataset
-
