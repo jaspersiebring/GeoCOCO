@@ -1,4 +1,4 @@
-![g20](https://github.com/jaspersiebring/GeoCOCO/assets/25051531/f18f0fcf-1049-4c2c-a785-4650aa1f9aca)
+![geococo logo](https://github.com/jaspersiebring/GeoCOCO/assets/25051531/a5749794-7314-4a17-ae71-3d8015a5933c)
 [![Downloads](https://static.pepy.tech/badge/libretro-finder)](https://pepy.tech/project/libretro-finder)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/libretro-finder)
 ![PyPI - License](https://img.shields.io/pypi/l/libretro-finder)
