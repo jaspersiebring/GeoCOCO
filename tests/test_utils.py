@@ -1,6 +1,6 @@
 import numpy as np
 from rasterio.windows import Window
-from geococo.utils import generate_window_offsets, window_factory, generate_window_polygon
+from geococo.utils import generate_window_offsets, window_factory, mask_to_rle, rle_to_mask
 from geococo.models import WindowSource
 
 
