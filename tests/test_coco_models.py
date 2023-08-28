@@ -69,7 +69,7 @@ def test_dataset_add_images():
 
 
 def test_info():
-    """Simply instance test"""
+    """Simple instance test"""
 
     Info(
         year=None,
@@ -82,13 +82,13 @@ def test_info():
 
 
 def test_image():
-    """Simply instance test"""
+    """Simple instance test"""
 
     Image(id=1, width=512, height=512, file_name=pathlib.Path("image.png"))
 
 
 def test_annotation():
-    """Simply instance test"""
+    """Simple instance test"""
 
     Annotation(
         id=1,
@@ -102,6 +102,6 @@ def test_annotation():
 
 
 def test_category():
-    """Simply instance test"""
+    """Simple instance test"""
 
     Category(id=1, name="", supercategory="")
