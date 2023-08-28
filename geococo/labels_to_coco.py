@@ -17,8 +17,7 @@ from geococo.coco_models import Category
 from geococo.utils import estimate_schema, generate_window_offsets, window_factory, generate_window_polygon, reshape_image, process_label_mask, window_intersect
 
 
-def populate_coco_dataset(dataset: CocoDataset, images_dir: pathlib.Path, src: DatasetReader, labels: gpd.GeoDataFrame, window_bounds:  List[Tuple[int, int]]) -> CocoDataset:    
-    
+def populate_coco_dataset(dataset: CocoDataset, images_dir: pathlib.Path, src: DatasetReader, labels: gpd.GeoDataFrame, window_bounds:  List[Tuple[int, int]]) -> CocoDataset:
     # Setting nodata and estimating window configuration
     parent_window = window_intersect(input_raster=src, input_vector=labels)
     nodata_value = src.nodata if src.nodata else 0    
@@ -34,7 +33,7 @@ def populate_coco_dataset(dataset: CocoDataset, images_dir: pathlib.Path, src: D
         intersect_mask = labels.intersects(window_geom)
         if not intersect_mask.any():
             continue
-
+        
         # all_touched is needed because of np.ceil in WindowSource
         window_labels = labels[intersect_mask]
         window_image, window_transform = riomask(dataset=src, shapes=[window_geom], all_touched=True, crop=True)
@@ -64,8 +63,7 @@ def populate_coco_dataset(dataset: CocoDataset, images_dir: pathlib.Path, src: D
             height=window_image.shape[2],
             file_name = window_image_path
             )
-        dataset.add_image(image=image_instance)
-        
+               
         # Iteratively add Annotation models to dataset (also bumps next_annotation_id)
         with rasterio.open(window_image_path) as windowed_src:
             for _, window_label in window_labels.sort_values('category_id').iterrows():
@@ -85,6 +83,7 @@ def populate_coco_dataset(dataset: CocoDataset, images_dir: pathlib.Path, src: D
                     iscrowd=0
                     )
                 dataset.add_annotation(annotation=annotation_instance)
-                
-    return dataset
+                                
+        dataset.add_image(image=image_instance)
 
+    return dataset
