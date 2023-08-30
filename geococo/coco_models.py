@@ -59,7 +59,7 @@ class Annotation(BaseModel):
     id: int
     image_id: int
     category_id: int
-    segmentation: Segmentation
+    segmentation: RleDict
     area: float
     bbox: List[float]
     iscrowd: int
@@ -72,6 +72,6 @@ class Category(BaseModel):
     supercategory: str
 
 
-class Segmentation(TypedDict):
+class RleDict(TypedDict):
     size: List[int]
     counts: bytes

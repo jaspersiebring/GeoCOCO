@@ -2,7 +2,7 @@ import os
 import numpy as np
 import pathlib
 from datetime import datetime
-from geococo.coco_models import CocoDataset, Info, Image, Annotation, Category, Segmentation
+from geococo.coco_models import CocoDataset, Info, Image, Annotation, Category, RleDict
 
 """
 Preface: we're mainly testing the logic inside the pydantic models, not the models/fields themselves (that would be a bit redundant)
@@ -31,7 +31,7 @@ def test_dataset_add_annotations():
     assert dataset.next_annotation_id == 1
     assert dataset.next_image_id == 1
     n_annotations = np.random.randint(2, 10)
-    segmentation = Segmentation(size= [256, 256], counts=  os.urandom(np.random.randint(1, 100)))
+    segmentation = RleDict(size= [256, 256], counts=  os.urandom(np.random.randint(1, 100)))
 
     for _ in range(n_annotations):
         ann = Annotation(
@@ -92,7 +92,7 @@ def test_image():
 def test_annotation():
     """Simple instance test"""
 
-    segmentation = Segmentation(size= [256, 256], counts=  os.urandom(np.random.randint(1, 100)))
+    segmentation = RleDict(size= [256, 256], counts=  os.urandom(np.random.randint(1, 100)))
 
     Annotation(
         id=1,
@@ -113,4 +113,4 @@ def test_category():
 def test_segmentation():
     """Simple instance test"""
     
-    Segmentation(size= [256, 256], counts=  os.urandom(np.random.randint(1, 100)))
+    RleDict(size= [256, 256], counts=  os.urandom(np.random.randint(1, 100)))
