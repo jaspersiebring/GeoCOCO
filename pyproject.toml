@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "geococo"
-version = "0.1.0-alpha"
+version = "0.1.1"
 description = "Work in progress"
 authors = ["Jasper <j.siebring92@gmail.com>"]
 readme = "README.md"

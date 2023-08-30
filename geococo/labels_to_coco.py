@@ -1,5 +1,6 @@
 import warnings
 import cv2
+from pycocotools import mask as cocomask
 import pathlib
 import tempfile
 import uuid
@@ -10,14 +11,17 @@ import numpy as np
 import rasterio
 from rasterio.io import DatasetReader
 from rasterio.mask import mask as riomask
-from shapely.geometry import box
+from shapely.geometry import box, MultiPolygon
 from tqdm import tqdm
 from geococo.coco_models import Annotation, CocoDataset, Image, Info
 from geococo.coco_models import Category
-from geococo.utils import estimate_schema, generate_window_offsets, window_factory, generate_window_polygon, reshape_image, process_label_mask, window_intersect
+from geococo.utils import estimate_schema, generate_window_offsets, window_factory, generate_window_polygon, reshape_image, window_intersect, mask_label
 
+#def main
+#check validity of labels
+#add categories to dataset if valid additions
 
-def populate_coco_dataset(dataset: CocoDataset, images_dir: pathlib.Path, src: DatasetReader, labels: gpd.GeoDataFrame, window_bounds:  List[Tuple[int, int]]) -> CocoDataset:
+def labels_to_dataset(dataset: CocoDataset, images_dir: pathlib.Path, src: DatasetReader, labels: gpd.GeoDataFrame, window_bounds:  List[Tuple[int, int]]) -> CocoDataset:
     # Setting nodata and estimating window configuration
     parent_window = window_intersect(input_raster=src, input_vector=labels)
     nodata_value = src.nodata if src.nodata else 0    
@@ -63,16 +67,19 @@ def populate_coco_dataset(dataset: CocoDataset, images_dir: pathlib.Path, src: D
             height=window_image.shape[2],
             file_name = window_image_path
             )
-               
+
         # Iteratively add Annotation models to dataset (also bumps next_annotation_id)
         with rasterio.open(window_image_path) as windowed_src:
             for _, window_label in window_labels.sort_values('category_id').iterrows():
-                try:
-                    label_mask, _ = riomask(dataset=windowed_src, shapes = [window_label.geometry], all_touched=True, filled=False)
-                except UserWarning as e:
+                label_mask = mask_label(input_raster=windowed_src, label=window_label.geometry)
+                if not label_mask.any():
                     continue
 
-                rle, bounding_box, area = process_label_mask(label_mask=label_mask)
+                rle = cocomask.encode(np.asfortranarray(label_mask))
+                bounding_box = cv2.boundingRect(label_mask.astype(np.uint8))
+                area = np.sum(label_mask)
+                iscrowd = 1 if isinstance(window_label.geometry, MultiPolygon) else 0
+
                 annotation_instance = Annotation(
                     id = dataset.next_annotation_id,
                     image_id = dataset.next_image_id,
@@ -80,10 +87,10 @@ def populate_coco_dataset(dataset: CocoDataset, images_dir: pathlib.Path, src: D
                     segmentation=rle,
                     area=area,
                     bbox = bounding_box,
-                    iscrowd=0
+                    iscrowd=iscrowd
                     )
+                
                 dataset.add_annotation(annotation=annotation_instance)
-                                
         dataset.add_image(image=image_instance)
-
+        
     return dataset

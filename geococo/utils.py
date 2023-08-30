@@ -1,17 +1,37 @@
 import cv2
-from typing import Generator, List, Tuple, Dict
+from typing import Generator, List, Tuple, Dict, Optional, Union
 import geopandas as gpd
 import numpy as np
 from rasterio.io import DatasetReader
 from rasterio.transform import array_bounds
 from rasterio.windows import Window, from_bounds
 from rasterio.errors import WindowError
-from shapely.geometry import box
-from shapely.geometry.polygon import Polygon
+from rasterio.mask import mask as riomask
+from shapely.geometry import MultiPolygon, Polygon, box
 from geococo.window_schema import WindowSchema
 from numpy.ma import MaskedArray
 from pycocotools import mask as cocomask
+from geopandas.array import GeometryArray
 
+def mask_label(input_raster: DatasetReader, label: Union[Polygon, MultiPolygon]) -> np.ndarray:
+
+    """
+    Masks out an label from input_raster and flattens it to a 2D binary array. If it doesn't 
+    overlap, the resulting mask will only consist of False bools.
+    
+    :param input_raster: open rasterio DatasetReader for the input raster
+    :param label: Polygon object representing the area to be masked (i.e. label)
+    :return: A 2D binary array representing the label
+    """
+
+    if input_raster.closed:
+        raise ValueError("Attempted mask with a closed DatasetReader")
+    
+    label_mask, _ = riomask(dataset=input_raster, shapes = [label], all_touched=True, filled=False)
+    label_mask = np.all(label_mask.mask, axis=0)
+    label_mask = np.invert(label_mask)
+
+    return label_mask
 
 def window_intersect(input_raster: DatasetReader, input_vector: gpd.GeoDataFrame) -> Window:
     """
@@ -34,30 +54,13 @@ def window_intersect(input_raster: DatasetReader, input_vector: gpd.GeoDataFrame
     try:
         intersection_window = vector_window.intersection(raster_window)
     except WindowError as window_error:
-        raise ValueError("something") from window_error
+        raise ValueError("Extent of input raster and vector don't overlap") from window_error
     
     return intersection_window
 
-def process_label_mask(label_mask: MaskedArray) -> Tuple[Dict, List[int], int]:
-    """
-    Generates all necessary values for a COCO Annotation
-
-    :param label_mask: A binary mask for an intersected label
-    :return: RLE-encoded annotations and their bounds/total area
-    """
-
-    label_mask = np.all(label_mask.mask, axis=0)
-    label_mask = np.invert(label_mask)
-    rle = cocomask.encode(np.asfortranarray(label_mask))
-    bounding_box = cv2.boundingRect(label_mask.astype(np.uint8))
-    area = np.sum(label_mask)
-
-    return rle, bounding_box, area
-
-
 def reshape_image(img_array: np.ndarray, shape: Tuple[int, int, int], padding_value: int = 0) -> np.ndarray:
     """
-    Reshapes numpy array to match given shape, done through slicing or padding. 
+    Reshapes 3D numpy array to match given 3D shape, done through slicing or padding. 
 
     :param img_array: the numpy array to be reshaped 
     :param shape: the desired shape (bands, rows, cols)
@@ -74,7 +77,6 @@ def reshape_image(img_array: np.ndarray, shape: Tuple[int, int, int], padding_va
     
     return img_array
 
-
 def generate_window_polygon(datasource: DatasetReader, window: Window) -> Polygon:
     """
     Turns the spatial bounds of a given window to a shapely.Polygon 
@@ -89,7 +91,6 @@ def generate_window_polygon(datasource: DatasetReader, window: Window) -> Polygo
     window_bounds = array_bounds(window.height, window.width, window_transform)
     window_poly = box(*window_bounds)
     return window_poly
-
 
 def generate_window_offsets(window: Window, schema: WindowSchema) -> np.ndarray:
     """
