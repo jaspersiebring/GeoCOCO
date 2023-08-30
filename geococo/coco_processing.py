@@ -14,6 +14,27 @@ from geococo.utils import estimate_schema, generate_window_offsets, window_facto
 
 
 def labels_to_dataset(dataset: CocoDataset, images_dir: pathlib.Path, src: DatasetReader, labels: gpd.GeoDataFrame, window_bounds:  List[Tuple[int, int]]) -> CocoDataset:
+    """
+    Move across a given geotiff, converting all intersecting labels to COCO annotations and 
+    appending them to a COCODataset model. This is done through rasterio.Window objects, the 
+    bounds of which you can set with window_bounds (also determines the size of the output 
+    images associated with the Annotation instances). The degree of overlap between these 
+    windows is determined by the dimensions of the given labels to maximize representation 
+    in the resulting dataset.
+
+    The "iscrowd" attribute (see https://cocodataset.org/#format-data) is determined by whether
+    the respective labels are Polygon or MultiPolygon instances. The "category_id" attribute, 
+    which represents class or category identifiers, is expected to be present in the given labels 
+    GeoDataFrame under the same name.
+    
+    :param dataset: CocoDataset model to append images and annotations to
+    :param images_dir: output directory for all label images
+    :param src: rasterio reader for input raster 
+    :param labels: GeoDataFrame containing labels and class_info ('category_id')
+    :param window_bounds: a list of window_bounds to attempt to use ()
+    :return: The COCO dataset with appended Images and Annotations
+    """
+
     # Setting nodata and estimating window configuration
     parent_window = window_intersect(input_raster=src, input_vector=labels)
     nodata_value = src.nodata if src.nodata else 0    
