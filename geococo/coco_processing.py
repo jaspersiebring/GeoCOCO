@@ -1,25 +1,17 @@
-import warnings
 import cv2
 from pycocotools import mask as cocomask
 import pathlib
-import tempfile
-import uuid
-from datetime import datetime
 from typing import List, Tuple
 import geopandas as gpd
 import numpy as np
 import rasterio
 from rasterio.io import DatasetReader
 from rasterio.mask import mask as riomask
-from shapely.geometry import box, MultiPolygon
+from shapely.geometry import MultiPolygon
 from tqdm import tqdm
-from geococo.coco_models import Annotation, CocoDataset, Image, Info
-from geococo.coco_models import Category
+from geococo.coco_models import Annotation, CocoDataset, Image
 from geococo.utils import estimate_schema, generate_window_offsets, window_factory, generate_window_polygon, reshape_image, window_intersect, mask_label
 
-#def main
-#check validity of labels
-#add categories to dataset if valid additions
 
 def labels_to_dataset(dataset: CocoDataset, images_dir: pathlib.Path, src: DatasetReader, labels: gpd.GeoDataFrame, window_bounds:  List[Tuple[int, int]]) -> CocoDataset:
     # Setting nodata and estimating window configuration
