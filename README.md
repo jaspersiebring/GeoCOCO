@@ -1,4 +1,5 @@
 ![geococo logo](https://github.com/jaspersiebring/GeoCOCO/assets/25051531/a5749794-7314-4a17-ae71-3d8015a5933c)
+
 [![PyPI](https://img.shields.io/pypi/v/libretro-finder)](https://pypi.org/project/libretro-finder/)
 [![Downloads](https://static.pepy.tech/badge/libretro-finder)](https://pepy.tech/project/libretro-finder)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/libretro-finder)
@@ -8,7 +9,7 @@ Tool for converting GIS annotations to Microsoft's Common Objects In Context (CO
 
 Built with `Pydantic` and `pycocotools`, it features a 1:1 representation of the COCO standard with out-of-the-box support for JSON-encoding and RLE compression. The resulting datasets are versionable and designed to be extended by subsequent runs with new data. It also accepts any GIS file format as input, courtesy of the `geopandas` and `rasterio` packages (e.g. geotif, geopackage, shapefile).
 
-Lastly, it can be run as a standalone command line tool or can be integrated in your own image processing pipeline by importing the `geococo` module as a package.
+Lastly, it can be run directly from your terminal as a standalone command line tool or be integrated into your image processing pipeline via the [`geococo` module](https://pypi.org/project/libretro-finder/).
 
 
 # Features
@@ -32,8 +33,8 @@ pipx install geococo
 ````
 
 
-# Using `geococo` module in Python
-After installing `geococo`, the following methods can be imported to create and save COCO datasets from your own GIS annotations.
+# Using `geococo` in Python
+After installing `geococo`, the following methods can be used to create and save COCO datasets from your own GIS annotations.
 ````
 # Importing main interface
 import pathlib
