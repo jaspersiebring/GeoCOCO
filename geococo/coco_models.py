@@ -1,7 +1,8 @@
 from __future__ import annotations
 import pathlib
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import List, Optional
+from typing_extensions import TypedDict
 from pydantic import AnyUrl, BaseModel, ConfigDict, InstanceOf, model_validator
 
 
@@ -58,7 +59,7 @@ class Annotation(BaseModel):
     id: int
     image_id: int
     category_id: int
-    segmentation: Dict
+    segmentation: Segmentation
     area: float
     bbox: List[float]
     iscrowd: int
@@ -69,3 +70,8 @@ class Category(BaseModel):
     id: int
     name: str
     supercategory: str
+
+
+class Segmentation(TypedDict):
+    size: List[int]
+    counts: bytes
