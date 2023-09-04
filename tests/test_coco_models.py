@@ -15,7 +15,6 @@ def test_dataset():
         version="1.0",
         description="Test",
         contributor="Test user",
-        url="https://github.com/jaspersiebring/GeoCOCO",
         date_created=datetime.now(),
     )
 
@@ -78,7 +77,6 @@ def test_info():
         version=None,
         description=None,
         contributor=None,
-        url=None,
         date_created=datetime.now(),
     )
 

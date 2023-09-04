@@ -29,7 +29,7 @@ def labels_to_dataset(dataset: CocoDataset, images_dir: pathlib.Path, src: Datas
     
     :param dataset: CocoDataset model to append images and annotations to
     :param images_dir: output directory for all label images
-    :param src: rasterio reader for input raster 
+    :param src: open rasterio reader for input raster 
     :param labels: GeoDataFrame containing labels and class_info ('category_id')
     :param window_bounds: a list of window_bounds to attempt to use ()
     :return: The COCO dataset with appended Images and Annotations

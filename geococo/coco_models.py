@@ -3,7 +3,7 @@ import pathlib
 from datetime import datetime
 from typing import List, Optional
 from typing_extensions import TypedDict
-from pydantic import AnyUrl, BaseModel, ConfigDict, InstanceOf, model_validator
+from pydantic import BaseModel, ConfigDict, InstanceOf, model_validator
 
 
 class CocoDataset(BaseModel):
@@ -42,7 +42,6 @@ class Info(BaseModel):
     version: Optional[str] = None
     description: Optional[str] = None
     contributor: Optional[str] = None
-    url: Optional[AnyUrl] = None
     date_created: Optional[datetime] = None
 
 
