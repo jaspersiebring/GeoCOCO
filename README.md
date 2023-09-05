@@ -1,9 +1,8 @@
 ![geococo logo](https://github.com/jaspersiebring/GeoCOCO/assets/25051531/b2a2db16-1400-4c43-b044-a924a378ef84)
 ---
-[![PyPI](https://img.shields.io/pypi/v/libretro-finder)](https://pypi.org/project/libretro-finder/)
-[![Downloads](https://static.pepy.tech/badge/libretro-finder)](https://pepy.tech/project/libretro-finder)
-![PyPI - Python Version](https://img.shields.io/pypi/pyversions/libretro-finder)
-![PyPI - License](https://img.shields.io/pypi/l/libretro-finder)
+[![PyPI](https://img.shields.io/pypi/v/geococo)](https://pypi.org/project/geococo/)
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/geococo)
+
 
 Easily transform your GIS annotations into [Microsoft's Common Objects In Context (COCO)](https://cocodataset.org/#format-data) datasets with GeoCOCO. This tool allows users to leverage the advanced digitizing solutions of modern GIS software for the annotations of image objects in geographic imagery.
  
