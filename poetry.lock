@@ -153,6 +153,21 @@ click = ">=4.0"
 test = ["pytest-cov"]
 
 [[package]]
+name = "cloup"
+version = "2.0.0.post1"
+description = "Adds features to Click: option groups, constraints, subcommand sections and help themes."
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "cloup-2.0.0.post1-py2.py3-none-any.whl", hash = "sha256:da37c0a940e066c4c2e17c351448e797333926c0e00a15139dbf57c2c4fab4d6"},
+    {file = "cloup-2.0.0.post1.tar.gz", hash = "sha256:1430c9075062e09cb64cd84ab7afe5d5acd28adf561d6ab3109eb1975bbd7b6b"},
+]
+
+[package.dependencies]
+click = ">=8.0,<9.0"
+typing-extensions = {version = "*", markers = "python_version <= \"3.8\""}
+
+[[package]]
 name = "colorama"
 version = "0.4.6"
 description = "Cross-platform colored terminal text."
@@ -230,6 +245,17 @@ python-versions = ">=3.6"
 files = [
     {file = "cycler-0.11.0-py3-none-any.whl", hash = "sha256:3a27e95f763a428a739d2add979fa7494c912a32c17c4c38c4d5f082cad165a3"},
     {file = "cycler-0.11.0.tar.gz", hash = "sha256:9c87405839a19696e837b3b818fed3f5f69f16f1eec1a1ad77e043dcea9c772f"},
+]
+
+[[package]]
+name = "docstring-parser"
+version = "0.15"
+description = "Parse Python docstrings in reST, Google and Numpydoc format"
+optional = false
+python-versions = ">=3.6,<4.0"
+files = [
+    {file = "docstring_parser-0.15-py3-none-any.whl", hash = "sha256:d1679b86250d269d06a99670924d6bce45adc00b08069dae8c47d98e89b667a9"},
+    {file = "docstring_parser-0.15.tar.gz", hash = "sha256:48ddc093e8b1865899956fcc03b03e66bb7240c310fac5af81814580c55bf682"},
 ]
 
 [[package]]
@@ -1340,25 +1366,24 @@ slack = ["slack-sdk"]
 telegram = ["requests"]
 
 [[package]]
-name = "typer"
-version = "0.9.0"
+name = "typer-cloup"
+version = "0.11.0"
 description = "Typer, build great CLIs. Easy to code. Based on Python type hints."
 optional = false
-python-versions = ">=3.6"
+python-versions = ">= 3.7"
 files = [
-    {file = "typer-0.9.0-py3-none-any.whl", hash = "sha256:5d96d986a21493606a358cae4461bd8cdf83cbf33a5aa950ae629ca3b51467ee"},
-    {file = "typer-0.9.0.tar.gz", hash = "sha256:50922fd79aea2f4751a8e0408ff10d2662bd0c8bbfa84755a699f3bada2978b2"},
+    {file = "typer-cloup-0.11.0.tar.gz", hash = "sha256:3a9f59e1c702026844316b744f959cfee5ea9db108f12810831bcd3673200596"},
+    {file = "typer_cloup-0.11.0-py3-none-any.whl", hash = "sha256:75d80b5354d16dc88ad39b613974a97bb3102cb2add78267046f12811d3561f1"},
 ]
 
 [package.dependencies]
-click = ">=7.1.1,<9.0.0"
-typing-extensions = ">=3.7.4.3"
+cloup = ">=2.0.0,<2.1.0"
 
 [package.extras]
-all = ["colorama (>=0.4.3,<0.5.0)", "rich (>=10.11.0,<14.0.0)", "shellingham (>=1.3.0,<2.0.0)"]
-dev = ["autoflake (>=1.3.1,<2.0.0)", "flake8 (>=3.8.3,<4.0.0)", "pre-commit (>=2.17.0,<3.0.0)"]
-doc = ["cairosvg (>=2.5.2,<3.0.0)", "mdx-include (>=1.4.1,<2.0.0)", "mkdocs (>=1.1.2,<2.0.0)", "mkdocs-material (>=8.1.4,<9.0.0)", "pillow (>=9.3.0,<10.0.0)"]
-test = ["black (>=22.3.0,<23.0.0)", "coverage (>=6.2,<7.0)", "isort (>=5.0.6,<6.0.0)", "mypy (==0.910)", "pytest (>=4.4.0,<8.0.0)", "pytest-cov (>=2.10.0,<5.0.0)", "pytest-sugar (>=0.9.4,<0.10.0)", "pytest-xdist (>=1.32.0,<4.0.0)", "rich (>=10.11.0,<14.0.0)", "shellingham (>=1.3.0,<2.0.0)"]
+all = ["colorama (>=0.4.4,<0.5.0)", "docstring_parser (>=0.15,<1.0)"]
+dev = ["autoflake (>=1.4.0,<1.5.0)", "flake8 (>=4.0.1,<4.1.0)", "pre-commit (>=2.19.0,<2.20.0)"]
+doc = ["cairosvg (>=2.5.2,<2.6.0)", "mdx-include (>=1.4.1,<1.5.0)", "mkdocs (>=1.2.4,<1.3.0)", "mkdocs-material (>=8.1.11,<8.2.0)", "pillow (>=9.3.0,<9.4.0)"]
+test = ["black (>=22.3.0,<22.4.0)", "coverage (>=6.0.0,<6.1.0)", "docstring_parser (>=0.15,<1.0)", "isort (>=5.10.1,<5.11.0)", "mypy (>=0.950,<1.0)", "pytest (>=7.1.2,<7.2.0)", "pytest-cov (>=3.0.0,<3.1.0)", "pytest-forked (>=1.4.0,<1.5.0)", "pytest-sugar (>=0.9.4,<0.10.0)", "pytest-xdist (>=3.0.2,<3.1.0)"]
 
 [[package]]
 name = "typing-extensions"
@@ -1400,4 +1425,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "52c6a11cb01b3210ca522c9c1f5c93c4cd9dcbe6d87d52adbc59a902875df749"
+content-hash = "25bd05a4e9f15d882c1cb9ee627889a5c3aceeb099411d6a534ff5439449d692"
