@@ -23,49 +23,112 @@ Installing from the Python Package Index (PyPI):
 ````
 # Install from PYPI with Python's package installer (pip)
 pip install geococo
-
-# [Optional] Install as isolated application through pipx (https://pypa.github.io/pipx/)
-pipx install geococo
 ````
 
 ## Example of usage
 
-#### Python module
-After installing `geococo`, the following methods can be used to create and save COCO datasets from your own GIS annotations.
-````
-# Importing main interface
-import pathlib
-from geococo import load_model, create_model, append_model
+After installing `geococo`, there are a number of ways you can interact with its API.
 
-# Replace this with your own input data
-raster_path = pathlib.Path("path/to/your/input/raster")
-label_path = pathlib.Path("path/to/your/input/labels")
+#### Command line interface
+ The easiest way to use `geococo` is to simply call it from your preferred terminal. You can use the tool entirely from your terminal by providing paths to your input data and the desired output image sizes like this.
+
+  ````
+# Example with local data and non-existent JSON file
+geococo image.tif labels.shp coco_folder dataset.json 512 512
+
+Creating new dataset..
+Dataset version: 0.1.0
+Dataset description: Test dataset
+Dataset contributor: User
+Dataset date: 2023-09-05 18:12:31.435591
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 234/234 [00:04<00:00, 50.36it/s]
+````
+For more information on the different options, call `geococo` with `--help`
+````
+geococo --help
+Usage: cli.py [OPTIONS] IMAGE_PATH LABELS_PATH JSON_PATH OUTPUT_DIR WIDTH HEIGHT
+
+  Transform your GIS annotations into a COCO dataset.
+
+  This method generates a COCO dataset by moving across the given image
+  (image_path) with a moving window (image_size), constantly checking for
+  intersecting annotations (labels_path)  that represent image objects in said
+  image (e.g. buildings in satellite imagery; denoted  by category_attribute).
+  Each valid intersection will add n Annotations entries to the dataset
+  (json_path) and save a subset of the input image that contained these entries
+  (output_dir).
+
+  The output data size depends on your input labels, as the moving window
+  adjusts its step size  to accommodate the average annotation size, optimizing
+  dataset representation and minimizing  tool configuration.
+
+Arguments:
+  IMAGE_PATH                 Path to the geospatial image containing image
+                             objects (e.g. buildings in satellite imagery)
+                             [required]
+  LABELS_PATH                Path to the annotations representing these image
+                             objects (='category_id')  [required]
+  JSON_PATH                  Path to the json file that will store the COCO
+                             dataset (will be appended to if already exists)
+                             [required]
+  OUTPUT_DIR                 Path to the output directory for image subsets
+                             [required]
+  WIDTH                      Width of the output images  [required]
+  HEIGHT                     Height of the output images  [required]
+
+Options:
+  --category-attribute TEXT  Column that contains category_id values per
+                             annotation feature  [default: category_id]
+  --help                     Show this message and exit.
+
+````
+
+#### Python module
+This is recommended for most developers as it gives you more granular control over the various steps. It does assume a basic understanding of the `geopandas` and `rasterio` packages.
+
+````
+import geopandas as gpd
+import rasterio
+from datetime import datetime
+from geococo import create_dataset, load_dataset, save_dataset, labels_to_dataset
 
 # Replace this with your preferred output paths
 data_path = pathlib.Path("path/to/your/coco/output/images")
 json_path = pathlib.Path("path/to/your/coco/json/file")
 
-# Instancing existing model
-dataset = load_model()
+# Width and height of the output images
+width, height = 512, 512
 
-# Instancing new model
-dataset = create_model()
+# Creating dataset instance from scratch
+version = "0.1.0"
+description = "My First Dataset"
+contributor = "User'
+date_created = datetime.now()
+dataset = create_dataset(
+  version = version, 
+  description = description, 
+  contributor = contributor, 
+  date_created = date_created
+)
 
-# Processing and
-dataset = append_model(
-    dataset=dataset,
-    raster_path = raster_path,
-    label_path = label_path,
-    bounds = [512, 512]
-    )
-````
+# Loading existing dataset instance
+# dataset = load_dataset(json_path=json_path)
 
-#### Command line interface
+# Loading GIS data with rasterio and geopandas
+labels = gpd.read_file(labels_path)
+with rasterio.open(image_path) as src:
 
-If installed with pip, GeoCOCO can be called directly from your preferred terminal by running `geococo`. You can use the tool entirely from your terminal by providing paths to your input data and the desired image size like this.
+    # Appending Annotation instances to dataset and clipping the image part that contains them
+    dataset = labels_to_dataset(
+        dataset = dataset, 
+        images_dir = output_dir,
+        src = src,
+        labels = labels,
+        window_bounds = [(width, height)]
+        )
 
-````
-some_user@some_machine:~ geococo --input_raster /your/input/raster --input_labels /your/input/labels --size 256,256 --output_dir /your/output/images --output_json /your/output/json
+# Encode CocoDataset instance as JSON and save to json_path
+save_dataset(dataset=dataset, json_path=json_path)
 ````
 
 # Visualization with FiftyOne
