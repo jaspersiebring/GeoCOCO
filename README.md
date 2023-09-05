@@ -1,4 +1,4 @@
-![geococo logo](https://github.com/jaspersiebring/GeoCOCO/assets/25051531/6a7b9912-4276-49dc-a09b-fdbea11f6294)
+![geococo logo](https://github.com/jaspersiebring/GeoCOCO/assets/25051531/b2a2db16-1400-4c43-b044-a924a378ef84)
 ---
 [![PyPI](https://img.shields.io/pypi/v/libretro-finder)](https://pypi.org/project/libretro-finder/)
 [![Downloads](https://static.pepy.tech/badge/libretro-finder)](https://pepy.tech/project/libretro-finder)
@@ -156,8 +156,8 @@ session = fo.launch_app(coco_dataset, port=5151)
 ````
 
 <p float="left">
-  <img src="https://github.com/jaspersiebring/GeoCOCO/assets/25051531/3fd31779-7c9b-4524-9722-44b4f693a023" width="45%" height = 250/>
-  <img src="https://github.com/jaspersiebring/GeoCOCO/assets/25051531/71ed2d59-d6b1-426a-9c7a-1260a50e4e40" width="45%" height = 250 />
+  <img src="https://github.com/jaspersiebring/GeoCOCO/assets/25051531/f8ab55da-b3cd-4beb-b082-7946e712ea5c" width="45%" height = 250/>
+  <img src="https://github.com/jaspersiebring/GeoCOCO/assets/25051531/9a796a54-ffc2-49c3-95bc-59e5c0dd1d7c" width="45%" height = 250 />
 </p>
 
 
