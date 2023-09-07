@@ -32,9 +32,9 @@ jobs:
       - name: Running mypy
         id: mypy
         run: poetry run mypy geococo/ tests/
-      - name: Running pylint
-        id: pylint
-        run: poetry run pylint geococo/ tests/ --fail-under=8
+      - name: Running ruff
+        id: ruff
+        run: poetry run ruff geococo/ tests/
       - name: Checking code coverage
         id: coverage
         run: poetry run pytest --cov=geococo --cov-fail-under=75
@@ -42,7 +42,7 @@ jobs:
       - name: Build source and .whl archives with Poetry
         id: build
         run: poetry build
-        if: steps.pytest.outcome == 'success' && steps.mypy.outcome == 'success' && steps.pylint.outcome == 'success' && steps.coverage.outcome == 'success' && github.event_name == 'push'
+        if: steps.pytest.outcome == 'success' && steps.mypy.outcome == 'success' && steps.ruff.outcome == 'success' && steps.coverage.outcome == 'success' && github.event_name == 'push'
 
       - name: Authorize GitHub Actions to publish on PYPI
         run: poetry config pypi-token.pypi ${{ secrets.PYPI_API_TOKEN }}
