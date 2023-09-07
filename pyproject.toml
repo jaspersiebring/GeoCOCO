@@ -31,6 +31,7 @@ black = "^23.7.0"
 ruff = "^0.0.285"
 types-pycocotools = "^2.0.0.4"
 types-tqdm = "^4.66.0.2"
+docformatter = {extras = ["tomli"], version = "^1.7.5"}
 
 [[tool.mypy.overrides]]
 module = [
@@ -39,6 +40,15 @@ module = [
     "shapely.*"
 ]
 ignore_missing_imports = true
+
+[tool.ruff]
+line-length = 88
+
+[tool.ruff.per-file-ignores]
+"geococo/__init__.py" = ["F401"]
+
+[tool.docformatter]
+black = true
 
 [build-system]
 requires = ["poetry-core"]
