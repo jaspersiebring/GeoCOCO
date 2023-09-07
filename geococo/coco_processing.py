@@ -9,7 +9,7 @@ from rasterio.io import DatasetReader
 from rasterio.mask import mask as riomask
 from shapely.geometry import MultiPolygon
 from tqdm import tqdm
-from geococo.coco_models import Annotation, CocoDataset, Image
+from geococo.coco_models import Annotation, CocoDataset, Image, Source
 from geococo.utils import estimate_schema, generate_window_offsets, window_factory, generate_window_polygon, reshape_image, window_intersect, mask_label
 
 
@@ -78,7 +78,8 @@ def labels_to_dataset(dataset: CocoDataset, images_dir: pathlib.Path, src: Datas
             id=dataset.next_image_id,
             width=window_image.shape[1],
             height=window_image.shape[2],
-            file_name = window_image_path
+            file_name = window_image_path,
+            source_id=dataset.next_source_id
             )
 
         # Iteratively add Annotation models to dataset (also bumps next_annotation_id)
@@ -105,5 +106,6 @@ def labels_to_dataset(dataset: CocoDataset, images_dir: pathlib.Path, src: Datas
                 
                 dataset.add_annotation(annotation=annotation_instance)
         dataset.add_image(image=image_instance)
-        
+    dataset.add_source(source=Source(file_name=pathlib.Path(src.name), source_id=dataset.next_source_id))
+    
     return dataset
