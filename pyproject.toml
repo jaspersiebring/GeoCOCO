@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "geococo"
-version = "0.1.2"
+version = "0.2.0"
 description = "Converts GIS annotations to Microsoft's Common Objects In Context (COCO) dataset format"
 authors = ["Jasper <j.siebring92@gmail.com>"]
 readme = "README.md"
@@ -22,6 +22,7 @@ tqdm = "^4.66.1"
 typing-extensions = "^4.7.1"
 typer-cloup = "^0.11.0"
 docstring-parser = "^0.15"
+semver = "^3.0.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.0"
