@@ -32,9 +32,9 @@ jobs:
       - name: Running mypy
         id: mypy
         run: poetry run mypy geococo/ tests/
-      - name: Running pylint
+      - name: Running ruff
         id: pylint
-        run: poetry run pylint geococo/ tests/ --fail-under=8
+        run: poetry run ruff geococo/ tests/
       - name: Checking code coverage
         id: coverage
         run: poetry run pytest --cov=geococo --cov-fail-under=75
