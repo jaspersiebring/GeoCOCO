@@ -60,8 +60,8 @@ def labels_to_dataset(
     coco_profile.update({"dtype": np.uint8, "nodata": nodata_value, "driver": "JPEG"})
     schema = estimate_schema(gdf=labels, src=src, window_bounds=window_bounds)
     n_windows = generate_window_offsets(window=parent_window, schema=schema).shape[0]
-    source=Source(file_name=pathlib.Path(src.name), source_id=dataset.next_source_id)
-    
+    source = Source(file_name=pathlib.Path(src.name), source_id=dataset.next_source_id)
+
     for child_window in tqdm(
         window_factory(parent_window=parent_window, schema=schema), total=n_windows
     ):
@@ -92,8 +92,8 @@ def labels_to_dataset(
                 alpha=0,
                 beta=255,
                 norm_type=cv2.NORM_MINMAX,
-                dtype=cv2.CV_8U
-                )  # type: ignore
+                dtype=cv2.CV_8U,  # type: ignore
+            )
 
         # updating rasterio profile with window-specific values
         coco_profile.update(
@@ -106,8 +106,7 @@ def labels_to_dataset(
 
         # saving window_image to disk (if it doesn't exist already)
         window_image_path = (
-            images_dir
-            / f"{child_window.col_off}_{child_window.row_off}_"
+            images_dir / f"{child_window.col_off}_{child_window.row_off}_"
             f"{child_window.width}_{child_window.height}.jpg"
         )
         if not window_image_path.exists():
