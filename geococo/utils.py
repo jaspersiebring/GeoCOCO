@@ -1,5 +1,4 @@
-import cv2
-from typing import Generator, List, Tuple, Dict, Optional, Union
+from typing import Generator, List, Tuple, Union
 import geopandas as gpd
 import numpy as np
 from rasterio.io import DatasetReader
@@ -9,9 +8,6 @@ from rasterio.errors import WindowError
 from rasterio.mask import mask as riomask
 from shapely.geometry import MultiPolygon, Polygon, box
 from geococo.window_schema import WindowSchema
-from numpy.ma import MaskedArray
-from pycocotools import mask as cocomask
-from geopandas.array import GeometryArray
 
 def mask_label(input_raster: DatasetReader, label: Union[Polygon, MultiPolygon]) -> np.ndarray:
 
@@ -101,12 +97,12 @@ def generate_window_offsets(window: Window, schema: WindowSchema) -> np.ndarray:
     :return: an array of window offsets within the bounds of window
     """
 
-    col_range = np.arange(
+    col_range: np.ndarray = np.arange(
         np.max((0, window.col_off - schema.width_overlap)),
         window.width + window.col_off - schema.width_overlap,
         schema.width_step
     )
-    row_range = np.arange(
+    row_range: np.ndarray = np.arange(
         np.max((0, window.row_off - schema.height_overlap)),
         window.height + window.row_off - schema.height_overlap,
         schema.height_step
@@ -184,8 +180,11 @@ def estimate_schema(gdf: gpd.GeoDataFrame, src: DatasetReader, quantile : float 
             schema = WindowSchema(
                 width_window=width,
                 width_overlap=width_overlap,
+                width_step=None,
                 height_window=height,
-                height_overlap=height_overlap)
+                height_overlap=height_overlap,
+                height_step=None
+                )
             break  # Break the loop as soon as a valid schema is found
         
         except ValueError as value_error:

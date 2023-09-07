@@ -1433,6 +1433,28 @@ doc = ["cairosvg (>=2.5.2,<2.6.0)", "mdx-include (>=1.4.1,<1.5.0)", "mkdocs (>=1
 test = ["black (>=22.3.0,<22.4.0)", "coverage (>=6.0.0,<6.1.0)", "docstring_parser (>=0.15,<1.0)", "isort (>=5.10.1,<5.11.0)", "mypy (>=0.950,<1.0)", "pytest (>=7.1.2,<7.2.0)", "pytest-cov (>=3.0.0,<3.1.0)", "pytest-forked (>=1.4.0,<1.5.0)", "pytest-sugar (>=0.9.4,<0.10.0)", "pytest-xdist (>=3.0.2,<3.1.0)"]
 
 [[package]]
+name = "types-pycocotools"
+version = "2.0.0.4"
+description = "Typing stubs for pycocotools"
+optional = false
+python-versions = "*"
+files = [
+    {file = "types-pycocotools-2.0.0.4.tar.gz", hash = "sha256:5eb30920a6d2ae2549167422dcf39d4005d525f03902c0d0e99b4ea6d1c38f6e"},
+    {file = "types_pycocotools-2.0.0.4-py3-none-any.whl", hash = "sha256:8ec8169d0da5280624cf4e720dd20f703bc0b65e2a69abb73f783c97b6a4b93e"},
+]
+
+[[package]]
+name = "types-tqdm"
+version = "4.66.0.2"
+description = "Typing stubs for tqdm"
+optional = false
+python-versions = "*"
+files = [
+    {file = "types-tqdm-4.66.0.2.tar.gz", hash = "sha256:9553a5e44c1d485fce19f505b8bd65c0c3e87e870678d1f2ed764ae59a55d45f"},
+    {file = "types_tqdm-4.66.0.2-py3-none-any.whl", hash = "sha256:13dddd38908834abdf0acdc2b70cab7ac4bcc5ad7356ced450471662e58a0ffc"},
+]
+
+[[package]]
 name = "typing-extensions"
 version = "4.7.1"
 description = "Backported and Experimental Type Hints for Python 3.7+"
@@ -1472,4 +1494,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "c41554f076cfe5d45f67fd2ba5c5aff5974fb15ba918a0a5228a7fe647d78976"
+content-hash = "3e3e040f9a53f3cd9e98eaa5f31288a6ef6a485363ee523e3b7cbcfa3602810d"

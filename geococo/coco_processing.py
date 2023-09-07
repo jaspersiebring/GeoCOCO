@@ -62,7 +62,7 @@ def labels_to_dataset(dataset: CocoDataset, images_dir: pathlib.Path, src: Datas
 
         # normalizing values to uint8 range (i.e COCO dtype) 
         if window_image.dtype != np.uint8:
-            window_image = cv2.normalize(window_image, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8U)
+            window_image = cv2.normalize(window_image, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8U) # type: ignore
 
         # updating rasterio profile with window-specific values
         coco_profile.update({'width': window_image.shape[1], 'height': window_image.shape[2], 'transform': window_transform})
@@ -98,7 +98,7 @@ def labels_to_dataset(dataset: CocoDataset, images_dir: pathlib.Path, src: Datas
                     id = dataset.next_annotation_id,
                     image_id = dataset.next_image_id,
                     category_id=window_label['category_id'],
-                    segmentation=rle,
+                    segmentation=rle, # type: ignore
                     area=area,
                     bbox = bounding_box,
                     iscrowd=iscrowd

@@ -29,6 +29,16 @@ pytest = "^7.4.0"
 mypy = "^1.5.1"
 black = "^23.7.0"
 ruff = "^0.0.285"
+types-pycocotools = "^2.0.0.4"
+types-tqdm = "^4.66.0.2"
+
+[[tool.mypy.overrides]]
+module = [
+    "rasterio.*",
+    "geopandas",
+    "shapely.*"
+]
+ignore_missing_imports = true
 
 [build-system]
 requires = ["poetry-core"]
