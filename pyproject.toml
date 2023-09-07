@@ -32,6 +32,7 @@ ruff = "^0.0.285"
 types-pycocotools = "^2.0.0.4"
 types-tqdm = "^4.66.0.2"
 docformatter = {extras = ["tomli"], version = "^1.7.5"}
+pytest-cov = "^4.1.0"
 
 [[tool.mypy.overrides]]
 module = [
