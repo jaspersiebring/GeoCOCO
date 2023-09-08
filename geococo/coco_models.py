@@ -1,9 +1,10 @@
 from __future__ import annotations
 import pathlib
 from datetime import datetime
-from typing import List, Optional, Set
+from typing import List, Optional
 from typing_extensions import TypedDict
 from pydantic import BaseModel, ConfigDict, InstanceOf, model_validator
+
 
 
 class CocoDataset(BaseModel):
@@ -15,14 +16,12 @@ class CocoDataset(BaseModel):
     _next_image_id: int = 1
     _next_annotation_id: int = 1
     _next_source_id: int = 1
-    _unique_output_dirs: Set[pathlib.Path] = set()
-    _unique_source_images : Set[pathlib.Path] = set()
     
     @model_validator(mode="after")
     def _set_ids(self) -> CocoDataset:
         self._next_image_id = len(self.images) + 1
         self._next_annotation_id = len(self.annotations) + 1
-        self._next_source_id = len(self.sources) + 1
+        self._next_source_id = len(self.sources) #we begin with append
         return self
 
     def add_annotation(self, annotation: Annotation) -> None:
@@ -33,10 +32,16 @@ class CocoDataset(BaseModel):
         self.images.append(image)
         self._next_image_id += 1
 
-    def add_source(self, source: Source) -> None:
-        self.sources.append(source)
-        self._next_source_id += 1
-    
+    def add_source(self, source_path: pathlib.Path) -> None:
+        sources = [source for source in self.sources if source.file_name == source_path]
+        if sources:
+            assert len(sources) == 1
+            source = sources[0]
+        else:
+            source = Source(id=len(self.sources) + 1, file_name=source_path)
+            self.sources.append(source)
+        self._next_source_id = source.id
+
     @property
     def next_image_id(self) -> int:
         return self._next_image_id
@@ -48,6 +53,7 @@ class CocoDataset(BaseModel):
     @property
     def next_source_id(self) -> int:
         return self._next_source_id
+
 
 
 class Info(BaseModel):
@@ -91,5 +97,5 @@ class RleDict(TypedDict):
 
 
 class Source(BaseModel):
-    source_id: int
+    id: int
     file_name: pathlib.Path

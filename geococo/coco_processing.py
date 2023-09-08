@@ -60,8 +60,10 @@ def labels_to_dataset(
     coco_profile.update({"dtype": np.uint8, "nodata": nodata_value, "driver": "JPEG"})
     schema = estimate_schema(gdf=labels, src=src, window_bounds=window_bounds)
     n_windows = generate_window_offsets(window=parent_window, schema=schema).shape[0]
-    source = Source(file_name=pathlib.Path(src.name), source_id=dataset.next_source_id)
 
+    # sets dataset.next_source_id
+    dataset.add_source(source_path=pathlib.Path(src.name))
+    
     for child_window in tqdm(
         window_factory(parent_window=parent_window, schema=schema), total=n_windows
     ):
@@ -148,6 +150,4 @@ def labels_to_dataset(
 
                 dataset.add_annotation(annotation=annotation_instance)
         dataset.add_image(image=image_instance)
-    dataset.add_source(source=source)
-
     return dataset

@@ -60,8 +60,7 @@ def test_dataset_add_images():
     dataset = CocoDataset(info=Info())
     assert dataset.next_annotation_id == 1
     assert dataset.next_image_id == 1
-    assert dataset.next_source_id == 1
-
+    
     n_images = np.random.randint(2, 10)
 
     for _ in range(n_images):
@@ -76,7 +75,6 @@ def test_dataset_add_images():
 
     assert n_images == dataset.next_image_id - 1
     assert n_images == len(dataset.images)
-
 
 def test_info():
     """Simple instance test."""
@@ -129,4 +127,20 @@ def test_segmentation():
 def test_source():
     """Simple instance test."""
 
-    Source(file_name=pathlib.Path(), source_id=1)
+    Source(file_name=pathlib.Path(), id=1)
+
+
+def test_dataset_add_sources():
+    """Checks proper incrementation of source_id"""
+
+    # Bit different from the other ids since we check for duplication 
+    # and only increment if new
+    dataset = CocoDataset(info=Info())
+    assert dataset.next_source_id == 0
+    dataset.add_source(source_path=pathlib.Path("a"))
+    assert dataset.next_source_id == 1
+    # duplicates are still being added, this is wrong and should be fixed
+    dataset.add_source(source_path=pathlib.Path("a"))
+    assert dataset.next_source_id == 1
+    dataset.add_source(source_path=pathlib.Path("b"))
+    assert dataset.next_source_id == 2
