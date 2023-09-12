@@ -2,8 +2,9 @@ from __future__ import annotations
 import numpy as np
 import pathlib
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Union, Dict
 from typing_extensions import TypedDict
+from numpy.typing import ArrayLike
 
 from pydantic import BaseModel, ConfigDict, InstanceOf, model_validator
 from semver.version import Version
@@ -18,13 +19,20 @@ class CocoDataset(BaseModel):
     _next_image_id: int = 1
     _next_annotation_id: int = 1
     _next_source_id: int = 1
+    _category_mapper: Dict = {}
 
     @model_validator(mode="after")
     def _set_ids(self) -> CocoDataset:
         self._next_image_id = len(self.images) + 1
         self._next_annotation_id = len(self.annotations) + 1
         self._next_source_id = len(self.sources)
+        self._category_mapper = self._get_category_mapper()
         return self
+
+    def _get_category_mapper(self) -> Dict:
+        category_data = [(category.name, category.id) for category in self.categories]
+        category_mapper = dict(category_data) if category_data else {}
+        return category_mapper
 
     def add_annotation(self, annotation: Annotation) -> None:
         self.annotations.append(annotation)
@@ -46,6 +54,24 @@ class CocoDataset(BaseModel):
             self.bump_version(bump_method="minor")
 
         self._next_source_id = source.id
+
+    def add_categories(self, categories: ArrayLike[Union[int, str]] np.ndarray) -> None:
+        # filtering existing categories 
+        category_mask = np.isin(categories, self._category_mapper.keys())
+        new_categories = categories[~category_mask]
+
+        # generating mapper from new categories
+        start = len(self._category_mapper.values()) + 1
+        end = start + new_categories.size
+        category_dict = dict(zip(new_categories, np.arange(start, end)))
+
+        # instance and append new Category objects to dataset
+        for category_name, category_id in category_dict.items():
+            category = Category(id = category_id, name = category_name, supercategory="1")
+            self.categories.append(category)
+
+        # update existing category_mapper with new categories
+        self._category_mapper.update(category_dict)
 
     def bump_version(self, bump_method: str) -> None:
         bump_methods = ["patch", "minor", "major"]

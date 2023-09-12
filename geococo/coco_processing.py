@@ -54,7 +54,7 @@ def labels_to_dataset(
     :param category_attribute: Column containing category_id values
     :return: The COCO dataset with appended Images and Annotations
     """
-
+    
     # Setting nodata and estimating window configuration
     parent_window = window_intersect(input_raster=src, input_vector=labels)
     nodata_value = src.nodata if src.nodata else 0
@@ -68,6 +68,9 @@ def labels_to_dataset(
     
     # bumps major version if images_dir has been used in this dataset before
     dataset.verify_new_output_dir(images_dir=images_dir)
+
+    # sets dataset._category_mapper
+    dataset.add_categories(categories=labels[category_attribute].unique())
     
     for child_window in tqdm(
         window_factory(parent_window=parent_window, schema=schema), total=n_windows
@@ -142,11 +145,12 @@ def labels_to_dataset(
                 bounding_box = cv2.boundingRect(label_mask.astype(np.uint8))
                 area = np.sum(label_mask)
                 iscrowd = 1 if isinstance(window_label.geometry, MultiPolygon) else 0
-
+                category_id= dataset._category_mapper[window_label[category_attribute]]
+                
                 annotation_instance = Annotation(
                     id=dataset.next_annotation_id,
                     image_id=dataset.next_image_id,
-                    category_id=window_label[category_attribute],
+                    category_id=category_id,
                     segmentation=rle,  # type: ignore
                     area=area,
                     bbox=bounding_box,
