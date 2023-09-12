@@ -1,0 +1,83 @@
+name: Test and release
+on:
+  pull_request: # Pull request events (default: open, synchronized, reopened) in any branch triggers the workflow.
+  push:
+    branches:
+      - main # Pushes to main (i.e. after a merged PR)
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+      - name: Installing Poetry globally
+        run: pipx install poetry
+      - name: Installing Python
+        id: setup-python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.8
+          cache: poetry
+      - name: Installing Poetry environment
+        run: poetry install
+      - name: Setting tag to package version
+        shell: bash
+        run: |
+          echo "RELEASE_NAME=$(poetry version | tr ' ' '-')" >> $GITHUB_ENV
+          echo "RELEASE_VERSION=$(poetry version -s)" >> $GITHUB_ENV
+          
+      - name: Running pytest
+        id: pytest
+        run: poetry run pytest -v
+      - name: Running mypy
+        id: mypy
+        run: poetry run mypy geococo/ tests/
+      - name: Running ruff
+        id: ruff
+        run: poetry run ruff geococo/ tests/
+      - name: Checking code coverage
+        id: coverage
+        run: poetry run pytest --cov=geococo --cov-fail-under=75
+      
+      - name: Build source and .whl archives with Poetry
+        id: build
+        run: poetry build
+        if: steps.pytest.outcome == 'success' && steps.mypy.outcome == 'success' && steps.ruff.outcome == 'success' && steps.coverage.outcome == 'success' && github.event_name == 'push'
+
+      - name: Authorize GitHub Actions to publish on PYPI
+        run: poetry config pypi-token.pypi ${{ secrets.PYPI_API_TOKEN }}
+        if: steps.build.outcome == 'success'
+      - name: Publish on PYPI
+        run: poetry publish
+        if: steps.build.outcome == 'success'
+      
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
+        if: steps.build.outcome == 'success'
+        with:
+          name: ${{ env.RELEASE_NAME }}
+          path: dist/*
+              
+    outputs:
+      RELEASE_NAME: ${{ env.RELEASE_NAME }}
+      RELEASE_VERSION: ${{ env.RELEASE_VERSION }}
+      PASSED_BUILD: ${{ steps.build.outcome }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Collect all artifacts
+        uses: actions/download-artifact@v3
+        id: collect
+        if: ${{ needs.build.outputs.PASSED_BUILD }} == 'success'
+      - name: Upload all artifacts to Github 
+        uses: softprops/action-gh-release@v1
+        if: steps.collect.outcome == 'success'
+        with:
+          files: ${{ needs.build.outputs.RELEASE_NAME }}/*
+          tag_name: ${{ needs.build.outputs.RELEASE_VERSION }}
+          prerelease: false
+        
+

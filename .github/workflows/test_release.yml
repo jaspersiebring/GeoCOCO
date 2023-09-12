@@ -1,0 +1,30 @@
+name: Release on TestPyPi
+on:
+  workflow_dispatch: # Manual trigger (dev)
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+      - name: Installing Poetry globally
+        run: pipx install poetry
+      - name: Installing Python
+        id: setup-python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.8
+          cache: poetry
+      - name: Installing Poetry environment
+        run: poetry install      
+      - name: Build source and .whl archives with Poetry
+        id: build
+        run: poetry build
+      - name: Authorize GitHub Actions to publish on TestPYPI
+        run: |
+          poetry config repositories.test-pypi https://test.pypi.org/legacy/
+          poetry config pypi-token.test-pypi  ${{ secrets.TESTPYPI_API_TOKEN }}
+        if: steps.build.outcome == 'success'
+      - name: Publish on TestPYPI
+        run: poetry publish -r test-pypi
+        if: steps.build.outcome == 'success'

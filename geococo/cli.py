@@ -5,19 +5,9 @@ import geopandas as gpd
 import rasterio
 from geococo.coco_processing import labels_to_dataset
 from geococo.coco_manager import save_dataset, load_dataset, create_dataset
-from geococo.coco_models import Info
 from typing_extensions import Annotated
-import semver
-
-#version = semver.Version(0)
-#version = version.bump_major()
-#str(version)
 
 app = typer.Typer(add_completion=False, help="Transform your GIS annotations into COCO datasets.")
-# bump minor if diferent image and different output folder is detected
-# bump major if new output_dir is detected
-# bump patch if same image and output dir is detected
-
 
 @app.command()
 def new(
@@ -32,20 +22,15 @@ def new(
         ),
     ]
 ) -> None:
-    """Initialize a CocoDataset and save it to json_path"""
+    """Initialize a CocoDataset with version 0.0.0 and save it to json_path"""
 
     print("Creating new dataset..")
-    version = input("Dataset version: ")
     description = input("Dataset description: ")
     contributor = input("Dataset contributor: ")
-    date_created = datetime.now()
-    print(f"Dataset date: {date_created}")
 
     dataset = create_dataset(
-        version=version,
         description=description,
         contributor=contributor,
-        date_created=date_created,
     )
 
     # Encode CocoDataset instance as JSON and save to json_path
@@ -144,21 +129,24 @@ def add(
     tool configuration.
     """
 
-    if isinstance(json_path, pathlib.Path) and json_path.exists():
-        # Create and populate instance of CocoDataset from json_path
+    # Create and populate instance of CocoDataset from json_path
+    if isinstance(json_path, pathlib.Path) and json_path.exists():    
         dataset = load_dataset(json_path=json_path)
-
+    else:
+        raise ValueError("Provide existing COCO dataset through json_path")
+    
     # Loading and validating GIS data
     labels = gpd.read_file(labels_path)
     if not labels.is_valid.all():
         raise ValueError("Invalid geometry found, exiting..")
     elif category_attribute not in labels.columns:
         raise ValueError(
-            f"User-specified category attribute (={category_attribute}) not found in input labels, exiting.."
+            f"User-specified category attribute (={category_attribute}) not found "
+            "in input labels"
         )
 
     with rasterio.open(image_path) as src:
-        # Appending Annotation instances to dataset and clipping the image part that contains them
+        # Appending Annotation instances and clipping the image part that contains them
         dataset = labels_to_dataset(
             dataset=dataset,
             images_dir=output_dir,
@@ -169,13 +157,6 @@ def add(
 
     # Encode CocoDataset instance as JSON and save to json_path
     save_dataset(dataset=dataset, json_path=json_path)
-
-
-@app.command(name="bounds")
-def bounds() -> None:
-    """Find the minimal bounds for given annotations and geotiff"""
-    print(512, 512)
-
 
 if __name__ == "__main__":
     app()
