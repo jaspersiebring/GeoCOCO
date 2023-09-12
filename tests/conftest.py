@@ -77,6 +77,8 @@ def overlapping_labels() -> gpd.GeoDataFrame:
 
     crs = CRS.from_epsg(3857)
     classes = [1, 2, 2, 5, 5]
+    class_names = ["One", "Two", "Two", "Five", "Five"]
+
     points = [
         Point(10, -10),
         Point(30, -30),
@@ -88,7 +90,7 @@ def overlapping_labels() -> gpd.GeoDataFrame:
     polygons = [p.buffer(distance=buffers[i]) for i, p in enumerate(points)]
 
     labels = gpd.GeoDataFrame(
-        geometry=polygons, data={"category_id": classes}, crs=crs
+        geometry=polygons, data={"category_id": classes, "class_names": class_names}, crs=crs
     )  # type: ignore
     return labels
 
@@ -100,6 +102,7 @@ def nonoverlapping_labels() -> gpd.GeoDataFrame:
 
     crs = CRS.from_epsg(3857)
     classes = [1, 2, 2, 5, 5]
+    class_names = ["One", "Two", "Two", "Five", "Five"]
     points = [
         Point(510, -510),
         Point(530, -530),
@@ -111,7 +114,7 @@ def nonoverlapping_labels() -> gpd.GeoDataFrame:
     polygons = [p.buffer(distance=buffers[i]) for i, p in enumerate(points)]
 
     labels = gpd.GeoDataFrame(
-        geometry=polygons, data={"category_id": classes}, crs=crs
+        geometry=polygons, data={"category_id": classes, "class_names": class_names}, crs=crs
     )  # type: ignore
     return labels
 
