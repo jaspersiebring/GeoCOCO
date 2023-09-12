@@ -27,6 +27,7 @@ def labels_to_dataset(
     src: DatasetReader,
     labels: gpd.GeoDataFrame,
     window_bounds: List[Tuple[int, int]],
+    category_attribute: str = "category_id"
 ) -> CocoDataset:
     """Move across a given geotiff, converting all intersecting labels to COCO
     annotations and appending them to a COCODataset model. This is done through
@@ -50,6 +51,7 @@ def labels_to_dataset(
     :param labels: GeoDataFrame containing labels and class_info
         ('category_id')
     :param window_bounds: a list of window_bounds to attempt to use ()
+    :param category_attribute: Column containing category_id values
     :return: The COCO dataset with appended Images and Annotations
     """
 
@@ -129,7 +131,7 @@ def labels_to_dataset(
 
         # Iteratively add Annotation models to dataset (also bumps next_annotation_id)
         with rasterio.open(window_image_path) as windowed_src:
-            for _, window_label in window_labels.sort_values("category_id").iterrows():
+            for _, window_label in window_labels.sort_values(category_attribute).iterrows():
                 label_mask = mask_label(
                     input_raster=windowed_src, label=window_label.geometry
                 )
@@ -144,7 +146,7 @@ def labels_to_dataset(
                 annotation_instance = Annotation(
                     id=dataset.next_annotation_id,
                     image_id=dataset.next_image_id,
-                    category_id=window_label["category_id"],
+                    category_id=window_label[category_attribute],
                     segmentation=rle,  # type: ignore
                     area=area,
                     bbox=bounding_box,
