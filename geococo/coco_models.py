@@ -1,10 +1,12 @@
 from __future__ import annotations
+import numpy as np
 import pathlib
 from datetime import datetime
 from typing import List, Optional
 from typing_extensions import TypedDict
-from pydantic import BaseModel, ConfigDict, InstanceOf, model_validator
 
+from pydantic import BaseModel, ConfigDict, InstanceOf, model_validator
+from semver.version import Version
 
 
 class CocoDataset(BaseModel):
@@ -16,12 +18,12 @@ class CocoDataset(BaseModel):
     _next_image_id: int = 1
     _next_annotation_id: int = 1
     _next_source_id: int = 1
-    
+
     @model_validator(mode="after")
     def _set_ids(self) -> CocoDataset:
         self._next_image_id = len(self.images) + 1
         self._next_annotation_id = len(self.annotations) + 1
-        self._next_source_id = len(self.sources) #we begin with append
+        self._next_source_id = len(self.sources)
         return self
 
     def add_annotation(self, annotation: Annotation) -> None:
@@ -33,14 +35,37 @@ class CocoDataset(BaseModel):
         self._next_image_id += 1
 
     def add_source(self, source_path: pathlib.Path) -> None:
-        sources = [source for source in self.sources if source.file_name == source_path]
+        sources = [ssrc for ssrc in self.sources if ssrc.file_name == source_path]
         if sources:
             assert len(sources) == 1
             source = sources[0]
+            self.bump_version(bump_method="patch")
         else:
             source = Source(id=len(self.sources) + 1, file_name=source_path)
             self.sources.append(source)
+            self.bump_version(bump_method="minor")
+
         self._next_source_id = source.id
+
+    def bump_version(self, bump_method: str) -> None:
+        bump_methods = ["patch", "minor", "major"]
+        version = Version.parse(self.info.version)
+
+        if bump_method not in bump_methods:
+            raise ValueError(f"bump_method needs to be one of {bump_methods}")
+        elif bump_method == bump_methods[0]:
+            version = version.bump_patch()
+        elif bump_method == bump_methods[1]:
+            version = version.bump_minor()
+        else:
+            version = version.bump_major()
+
+        self.info.version = str(version)
+
+    def verify_new_output_dir(self, images_dir: pathlib.Path) -> None:
+        output_dirs = np.unique([image.file_name.parent for image in self.images])
+        if images_dir not in output_dirs:
+            self.bump_version(bump_method="major")
 
     @property
     def next_image_id(self) -> int:
@@ -49,16 +74,15 @@ class CocoDataset(BaseModel):
     @property
     def next_annotation_id(self) -> int:
         return self._next_annotation_id
-    
+
     @property
     def next_source_id(self) -> int:
         return self._next_source_id
 
 
-
 class Info(BaseModel):
+    version: str = str(Version(major=0))
     year: Optional[int] = None
-    version: Optional[str] = None
     description: Optional[str] = None
     contributor: Optional[str] = None
     date_created: Optional[datetime] = None

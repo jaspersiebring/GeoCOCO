@@ -1,3 +1,4 @@
+from semver import Version
 from datetime import datetime
 import pathlib
 from geococo.coco_models import CocoDataset, Info
@@ -20,17 +21,18 @@ def load_dataset(json_path: pathlib.Path) -> CocoDataset:
 
 
 def create_dataset(
-    version: str,
     description: str,
     contributor: str,
+    version: str = str(Version(major=0)),
     date_created: datetime = datetime.now(),
 ) -> CocoDataset:
-    """Instances and returns a new CocoDataset model with given kwargs.
+    """
+    Instances and returns a new CocoDataset model with given kwargs.
 
-    :param version: SemVer version of your COCO dataset
     :param description: Description of your COCO dataset
     :param contributor: Main contributors of your COCO dataset, its
         images and its annotations
+    :param version: Initial SemVer version (defaults to 0.0.0)
     :param date_created: Date when dataset was initially created,
         defaults to datetime.now()
     :return: An instance of CocoDataset without Image- and Annotation

@@ -81,7 +81,6 @@ def test_info():
 
     Info(
         year=None,
-        version=None,
         description=None,
         contributor=None,
         date_created=datetime.now(),
@@ -139,8 +138,26 @@ def test_dataset_add_sources():
     assert dataset.next_source_id == 0
     dataset.add_source(source_path=pathlib.Path("a"))
     assert dataset.next_source_id == 1
-    # duplicates are still being added, this is wrong and should be fixed
     dataset.add_source(source_path=pathlib.Path("a"))
     assert dataset.next_source_id == 1
     dataset.add_source(source_path=pathlib.Path("b"))
     assert dataset.next_source_id == 2
+
+
+def test_dataset_versions(tmp_path: pathlib.Path):
+    """Checks proper incrementation of dataset versions"""
+
+    dataset = CocoDataset(info=Info())
+    assert dataset.info.version == "0.0.0"
+    
+    # minor bump if same output_dir but different raster_source
+    dataset.add_source(source_path=pathlib.Path("a"))
+    assert dataset.info.version == "0.1.0"
+
+    # patch bump: if same output_dir and same raster_source
+    dataset.add_source(source_path=pathlib.Path("a"))
+    assert dataset.info.version == "0.1.1"
+
+    # major bump: if new output_dir
+    dataset.verify_new_output_dir(images_dir=pathlib.Path("b"))
+    assert dataset.info.version == "1.0.0"

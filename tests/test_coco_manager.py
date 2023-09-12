@@ -52,8 +52,8 @@ def test_load_dataset_empty(tmp_path: pathlib.Path) -> None:
     "contributor, version, description, date_created",
     [
         ("User", "0.1.0", "Test", datetime.now()),
-        ("", "", "", datetime.now()),
-        (None, None, None, datetime.now()),
+        ("", "123.123.123", "", datetime.now()),
+        (None, "0.0.0", None, datetime.now()),
     ],
 )
 def test_create_dataset(contributor, version, description, date_created) -> None:

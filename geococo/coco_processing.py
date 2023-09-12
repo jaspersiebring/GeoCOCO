@@ -9,7 +9,7 @@ from rasterio.io import DatasetReader
 from rasterio.mask import mask as riomask
 from shapely.geometry import MultiPolygon
 from tqdm import tqdm
-from geococo.coco_models import Annotation, CocoDataset, Image, Source
+from geococo.coco_models import Annotation, CocoDataset, Image
 from geococo.utils import (
     estimate_schema,
     generate_window_offsets,
@@ -60,9 +60,12 @@ def labels_to_dataset(
     coco_profile.update({"dtype": np.uint8, "nodata": nodata_value, "driver": "JPEG"})
     schema = estimate_schema(gdf=labels, src=src, window_bounds=window_bounds)
     n_windows = generate_window_offsets(window=parent_window, schema=schema).shape[0]
-
-    # sets dataset.next_source_id
+    
+    # sets dataset.next_source_id and possibly bumps minor version
     dataset.add_source(source_path=pathlib.Path(src.name))
+    
+    # bumps major version if images_dir has been used in this dataset before
+    dataset.verify_new_output_dir(images_dir=images_dir)
     
     for child_window in tqdm(
         window_factory(parent_window=parent_window, schema=schema), total=n_windows
@@ -108,8 +111,8 @@ def labels_to_dataset(
 
         # saving window_image to disk (if it doesn't exist already)
         window_image_path = (
-            images_dir / f"{child_window.col_off}_{child_window.row_off}_"
-            f"{child_window.width}_{child_window.height}.jpg"
+            images_dir / f"{dataset.next_source_id}_{child_window.col_off}_"
+            f"{child_window.row_off}_{child_window.width}_{child_window.height}.jpg"
         )
         if not window_image_path.exists():
             with rasterio.open(window_image_path, "w", **coco_profile) as dst:
