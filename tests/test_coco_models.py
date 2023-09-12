@@ -2,11 +2,15 @@ import os
 import numpy as np
 import pathlib
 from datetime import datetime
-from geococo.coco_models import CocoDataset, Info, Image, Annotation, Category, RleDict
-
-"""
-Preface: we're mainly testing the logic inside the pydantic models, not the models/fields themselves (that would be a bit redundant)
-"""
+from geococo.coco_models import (
+    CocoDataset,
+    Info,
+    Image,
+    Annotation,
+    Category,
+    RleDict,
+    Source,
+)
 
 
 def test_dataset():
@@ -24,13 +28,15 @@ def test_dataset():
 
 
 def test_dataset_add_annotations():
-    """Checks annotation_id increment"""
+    """Checks annotation_id increment."""
 
     dataset = CocoDataset(info=Info())
     assert dataset.next_annotation_id == 1
     assert dataset.next_image_id == 1
     n_annotations = np.random.randint(2, 10)
-    segmentation = RleDict(size= [256, 256], counts=  os.urandom(np.random.randint(1, 100)))
+    segmentation = RleDict(
+        size=[256, 256], counts=os.urandom(np.random.randint(1, 100))
+    )
 
     for _ in range(n_annotations):
         ann = Annotation(
@@ -49,11 +55,12 @@ def test_dataset_add_annotations():
 
 
 def test_dataset_add_images():
-    """Checks image_id increment"""
+    """Checks image_id increment."""
 
     dataset = CocoDataset(info=Info())
     assert dataset.next_annotation_id == 1
     assert dataset.next_image_id == 1
+    
     n_images = np.random.randint(2, 10)
 
     for _ in range(n_images):
@@ -62,19 +69,18 @@ def test_dataset_add_images():
             width=512,
             height=512,
             file_name=pathlib.Path("image.png"),
+            source_id=1,
         )
         dataset.add_image(image=img)
 
     assert n_images == dataset.next_image_id - 1
     assert n_images == len(dataset.images)
 
-
 def test_info():
-    """Simple instance test"""
+    """Simple instance test."""
 
     Info(
         year=None,
-        version=None,
         description=None,
         contributor=None,
         date_created=datetime.now(),
@@ -82,15 +88,17 @@ def test_info():
 
 
 def test_image():
-    """Simple instance test"""
+    """Simple instance test."""
 
-    Image(id=1, width=512, height=512, file_name=pathlib.Path("image.png"))
+    Image(id=1, width=512, height=512, file_name=pathlib.Path("image.png"), source_id=1)
 
 
 def test_annotation():
-    """Simple instance test"""
+    """Simple instance test."""
 
-    segmentation = RleDict(size= [256, 256], counts=  os.urandom(np.random.randint(1, 100)))
+    segmentation = RleDict(
+        size=[256, 256], counts=os.urandom(np.random.randint(1, 100))
+    )
 
     Annotation(
         id=1,
@@ -104,11 +112,52 @@ def test_annotation():
 
 
 def test_category():
-    """Simple instance test"""
+    """Simple instance test."""
 
     Category(id=1, name="", supercategory="")
 
+
 def test_segmentation():
-    """Simple instance test"""
+    """Simple instance test."""
+
+    RleDict(size=[256, 256], counts=os.urandom(np.random.randint(1, 100)))
+
+
+def test_source():
+    """Simple instance test."""
+
+    Source(file_name=pathlib.Path(), id=1)
+
+
+def test_dataset_add_sources():
+    """Checks proper incrementation of source_id"""
+
+    # Bit different from the other ids since we check for duplication 
+    # and only increment if new
+    dataset = CocoDataset(info=Info())
+    assert dataset.next_source_id == 0
+    dataset.add_source(source_path=pathlib.Path("a"))
+    assert dataset.next_source_id == 1
+    dataset.add_source(source_path=pathlib.Path("a"))
+    assert dataset.next_source_id == 1
+    dataset.add_source(source_path=pathlib.Path("b"))
+    assert dataset.next_source_id == 2
+
+
+def test_dataset_versions(tmp_path: pathlib.Path):
+    """Checks proper incrementation of dataset versions"""
+
+    dataset = CocoDataset(info=Info())
+    assert dataset.info.version == "0.0.0"
     
-    RleDict(size= [256, 256], counts=  os.urandom(np.random.randint(1, 100)))
+    # minor bump if same output_dir but different raster_source
+    dataset.add_source(source_path=pathlib.Path("a"))
+    assert dataset.info.version == "0.1.0"
+
+    # patch bump: if same output_dir and same raster_source
+    dataset.add_source(source_path=pathlib.Path("a"))
+    assert dataset.info.version == "0.1.1"
+
+    # major bump: if new output_dir
+    dataset.verify_new_output_dir(images_dir=pathlib.Path("b"))
+    assert dataset.info.version == "1.0.0"
