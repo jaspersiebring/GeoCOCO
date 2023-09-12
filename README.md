@@ -4,7 +4,6 @@
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/geococo)
 [![Build passing](https://github.com/jaspersiebring/GeoCOCO/actions/workflows/main.yml/badge.svg)](https://github.com/jaspersiebring/GeoCOCO/actions/workflows/main.yml)
 
-https://github.com/jaspersiebring/GeoCOCO/blob/main/.github/workflows/main.yml
 Easily transform your GIS annotations into [Microsoft's Common Objects In Context (COCO)](https://cocodataset.org/#format-data) datasets with GeoCOCO. This tool allows users to leverage the advanced digitizing solutions of modern GIS software for the annotations of image objects in geographic imagery.
  
 Built with `Pydantic` and `pycocotools`, it features a complete implementation of the COCO standard for object detection with out-of-the-box support for JSON-encoding and RLE compression. The resulting datasets are versioned, easily extendable with new annotations and fully compatible with other data applications that accept the COCO format.
@@ -96,14 +95,14 @@ from geococo import create_dataset, load_dataset, save_dataset, labels_to_datase
 data_path = pathlib.Path("path/to/your/coco/output/images")
 json_path = pathlib.Path("path/to/your/coco/json/file")
 
-# Width and height of the output images
+# Dimensions of the moving window and output images
 width, height = 512, 512
 
 # Creating dataset instance from scratch
-version = "0.1.0"
 description = "My First Dataset"
 contributor = "User'
 date_created = datetime.now()
+
 dataset = create_dataset(
   version = version, 
   description = description, 
@@ -111,21 +110,21 @@ dataset = create_dataset(
   date_created = date_created
 )
 
-# Loading existing dataset instance
+# You can also load existing COCO datasets
 # dataset = load_dataset(json_path=json_path)
 
 # Loading GIS data with rasterio and geopandas
 labels = gpd.read_file(labels_path)
-with rasterio.open(image_path) as src:
+raster_source = rasterio.open(image_path)
 
-    # Appending Annotation instances to dataset and clipping the image part that contains them
-    dataset = labels_to_dataset(
-        dataset = dataset, 
-        images_dir = output_dir,
-        src = src,
-        labels = labels,
-        window_bounds = [(width, height)]
-        )
+# Moving across raster_source and appending all intersecting annotations
+dataset = labels_to_dataset(
+    dataset = dataset, 
+    images_dir = output_dir,
+    src = raster_source,
+    labels = labels,
+    window_bounds = [(width, height)]
+    )
 
 # Encode CocoDataset instance as JSON and save to json_path
 save_dataset(dataset=dataset, json_path=json_path)
