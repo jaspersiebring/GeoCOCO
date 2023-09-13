@@ -231,35 +231,29 @@ def estimate_schema(
     return schema
 
 
-def assert_valid_categories(
-    categories: np.ndarray, max_dtype: str = "<U50"
-) -> np.ndarray:
+def mappable_category_id(categories: np.ndarray, max_dtype: str = "<U50") -> bool:
     """Checks if all elements in categories array can be represented by strings of a
-    certain length (defaults to <U50)
+    certain length (defaults to <U50; prerequisite for category_mapper values).
+    Since almost any object can be represented by str, this method mainly ensures that 
+    class_names won't be too long (e.g. if `geometry` is used as `category_attribute`)
 
     :param categories: numpy array containing category values
     :param max_dtype: numpy str dtype with char size
     """
 
-    # checking if categories is castable to str (a prerequisite for class_names)
-    if not isinstance(categories, np.ndarray):
-        raise ValueError("Categories needs to be of type np.ndarray")
-
     try:
-        str_categories = categories.astype(str)
-    except Exception as e:
-        raise ValueError("Category values need to be castable to str") from e
+        # checking if categories can be cast to str of a certain length (e.g. <U50)
+        categories = categories.astype(str)
+        # checking castable to str of limited char length (defaults to <U50)
+        mappable = np.can_cast(categories, max_dtype)
+    except Exception:
+        mappable = False
+    return mappable
+    
 
-    # checking if categories can be castable to str of a certain length (e.g. <U50)
-    if not np.can_cast(str_categories, max_dtype):
-        raise ValueError(f"Category values (str) have to fit in {max_dtype}")
-
-    return str_categories.astype(max_dtype)
-
-
-def valid_category_id(categories: np.ndarray) -> bool:
+def castable_category_id(categories: np.ndarray) -> bool:
         """
-        Check whether values from a given array can be cast to category_id
+        Check whether values from a given array can be cast to category_id (i.e. uint8)
 
         :param categories: numpy array containing category values
         :return: boolean indicating castable category_id column
@@ -268,8 +262,8 @@ def valid_category_id(categories: np.ndarray) -> bool:
             # attemping to cast to float (from arbitrary type)
             categories = categories.astype(float)
             # checking if castable to int without precision loss
-            valid = np.all(categories.astype(int) == categories)
-        except ValueError as ve:
-            valid = False
-        return valid
+            castable = np.all(categories.astype(int) == categories).astype(bool)
+        except ValueError:
+            castable = False
+        return castable
     

@@ -12,8 +12,8 @@ from geococo.utils import (
     estimate_average_bounds,
     estimate_schema,
     mask_label,
-    assert_valid_categories,
-    valid_category_id
+    mappable_category_id,
+    castable_category_id
 )
 from geococo.window_schema import WindowSchema
 import geopandas as gpd
@@ -285,9 +285,8 @@ def test_window_factory_boundless() -> None:
     assert np.any(window_extents[:, 1] >= window.height)
 
 
-def test_assert_valid_categories() -> None:
-    # almost all python objects can be represented by str
-    # so we just try casting and verify char length
+def test_mappable_category_id() -> None:
+    # almost all python objects can be represented by str so we just check char_length
     category_lengths = [10, 49, 50]
     random_words = np.array(
         [
@@ -296,11 +295,11 @@ def test_assert_valid_categories() -> None:
         ]
     )
 
-    _ = assert_valid_categories(random_words)
+    assert mappable_category_id(random_words)
 
     # float64
     random_numbers = np.random.randn(3).astype(np.float64)
-    _ = assert_valid_categories(random_numbers)
+    assert mappable_category_id(random_numbers)
 
     # longer than <U50
     category_lengths = [51, 70, 120]
@@ -310,20 +309,18 @@ def test_assert_valid_categories() -> None:
             for cl in category_lengths
         ]
     )
+    assert not mappable_category_id(random_words)
 
-    with pytest.raises(ValueError):
-        _ = assert_valid_categories(random_words)
-
-
-def test_valid_category_id() -> None:
+    
+def test_castable_category_id() -> None:
     categories = np.random.randint(0, 10, 5).astype(float).astype(str) #castable
-    assert valid_category_id(categories = categories)
+    assert castable_category_id(categories = categories)
      
     categories = np.random.randn(5).astype(str) #castable with precision loss
-    assert not valid_category_id(categories = categories)
+    assert not castable_category_id(categories = categories)
 
     categories = np.random.choice(list(ascii_lowercase), 5) #non-castable
-    assert not valid_category_id(categories = categories)
+    assert not castable_category_id(categories = categories)
 
 
     
