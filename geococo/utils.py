@@ -241,3 +241,28 @@ def estimate_schema(
         ) from last_exception
 
     return schema
+
+
+def assert_valid_categories(categories: np.ndarray, max_dtype: str = "<U50") -> np.ndarray:
+    """
+    Checks if all elements in categories array can be represented by strings 
+    of a certain length (defaults to <U50)
+
+    :param categories: numpy array containing category values
+    :param max_dtype: numpy str dtype with char size
+    """
+
+    # checking if categories is castable to str (a prerequisite for class_names)
+    if not isinstance(categories, np.ndarray):
+        raise ValueError("Categories needs to be of type np.ndarray")
+
+    try:
+        str_categories = categories.astype(str)
+    except Exception as e:
+        raise ValueError("Category values need to be castable to str") from e
+    
+    # checking if categories can be castable to str of a certain length (e.g. <U50)
+    if not np.can_cast(str_categories, max_dtype):
+        raise ValueError(f"Category values (str) have to fit in {max_dtype}")
+    
+    return str_categories.astype(max_dtype)

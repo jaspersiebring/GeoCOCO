@@ -8,9 +8,9 @@ from numpy.typing import ArrayLike
 
 from pydantic import BaseModel, ConfigDict, InstanceOf, model_validator
 from semver.version import Version
+from geococo.utils import assert_valid_categories
 
-
-class CocoDataset(BaseModel):
+class CocoDataset(BaseModel):    
     info: Info
     images: List[InstanceOf[Image]] = []
     annotations: List[InstanceOf[Annotation]] = []
@@ -55,7 +55,10 @@ class CocoDataset(BaseModel):
 
         self._next_source_id = source.id
 
-    def add_categories(self, categories: ArrayLike[Union[int, str]] np.ndarray) -> None:
+    def add_categories(self, categories: np.ndarray) -> None:
+        # checking if categories are castable to str and under a certain size
+        categories = assert_valid_categories(categories=np.unique(categories))
+        
         # filtering existing categories 
         category_mask = np.isin(categories, self._category_mapper.keys())
         new_categories = categories[~category_mask]
@@ -67,7 +70,7 @@ class CocoDataset(BaseModel):
 
         # instance and append new Category objects to dataset
         for category_name, category_id in category_dict.items():
-            category = Category(id = category_id, name = category_name, supercategory="1")
+            category = Category(id = category_id, name = str(category_name), supercategory="1")
             self.categories.append(category)
 
         # update existing category_mapper with new categories

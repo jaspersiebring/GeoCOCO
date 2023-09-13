@@ -145,7 +145,8 @@ def labels_to_dataset(
                 bounding_box = cv2.boundingRect(label_mask.astype(np.uint8))
                 area = np.sum(label_mask)
                 iscrowd = 1 if isinstance(window_label.geometry, MultiPolygon) else 0
-                category_id= dataset._category_mapper[window_label[category_attribute]]
+                category_name = str(window_label[category_attribute])
+                category_id = dataset._category_mapper[category_name]
                 
                 annotation_instance = Annotation(
                     id=dataset.next_annotation_id,

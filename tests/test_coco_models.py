@@ -2,6 +2,8 @@ import os
 import numpy as np
 import pathlib
 from datetime import datetime
+import geopandas as gpd
+import pytest
 from geococo.coco_models import (
     CocoDataset,
     Info,
@@ -144,7 +146,7 @@ def test_dataset_add_sources():
     assert dataset.next_source_id == 2
 
 
-def test_dataset_versions(tmp_path: pathlib.Path):
+def test_dataset_versions():
     """Checks proper incrementation of dataset versions"""
 
     dataset = CocoDataset(info=Info())
@@ -161,3 +163,28 @@ def test_dataset_versions(tmp_path: pathlib.Path):
     # major bump: if new output_dir
     dataset.verify_new_output_dir(images_dir=pathlib.Path("b"))
     assert dataset.info.version == "1.0.0"
+
+def test_add_categories():
+    """Checks independent mapping of category_attribute to class_ids"""
+
+    dataset = CocoDataset(info=Info())
+    assert dataset.categories == []
+    assert dataset._category_mapper == {}
+    
+    # adding three unique classes
+    categories = np.array(["A", "B", "B", "E", "E"])
+    dataset.add_categories(categories=categories)
+
+    # checking length and sequential category_ids
+    assert np.unique(categories).size == len(dataset._category_mapper)
+    assert np.unique(categories).size == len(dataset.categories)
+    assert np.all(np.diff(list(dataset._category_mapper.values())) == 1)
+    
+    #check if existing key value pairs don't change 
+    # done by adding a bunch of existing classes and one new one
+    initial_mapper = dataset._category_mapper.copy()
+    categories = np.array(["One", "Two", "Two", "Five", "Five", "Six", "Six"])
+    dataset.add_categories(categories=categories)
+    subset_mapper = {key: value for key, value in dataset._category_mapper.items() if key in initial_mapper.keys()}
+    assert initial_mapper == subset_mapper
+    assert np.all(np.diff(list(dataset._category_mapper.values())) == 1)

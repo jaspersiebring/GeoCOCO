@@ -12,9 +12,11 @@ from geococo.utils import (
     estimate_average_bounds,
     estimate_schema,
     mask_label,
+    assert_valid_categories
 )
 from geococo.window_schema import WindowSchema
 import geopandas as gpd
+from string import ascii_lowercase
 from typing import Tuple
 
 
@@ -280,3 +282,31 @@ def test_window_factory_boundless() -> None:
     )
     assert np.any(window_extents[:, 0] >= window.width)
     assert np.any(window_extents[:, 1] >= window.height)
+
+
+
+def test_assert_valid_categories() -> None:
+    # almost all python objects can be represented by str so we just try casting and verify char length
+    category_lengths = [10, 49, 50]
+    random_words = [ "".join(np.random.choice(list(ascii_lowercase), cl))  for cl in category_lengths]
+    random_words = np.array(random_words)
+    
+    _ = assert_valid_categories(random_words)
+
+    # float64 
+    random_numbers = np.random.randn(3).astype(np.float64)
+    _ = assert_valid_categories(random_numbers)
+
+    # longer than <U50
+    category_lengths = [51, 70, 120]
+    random_words = [ "".join(np.random.choice(list(ascii_lowercase), cl))  for cl in category_lengths]
+    random_words = np.array(random_words)
+
+    with pytest.raises(ValueError):
+        _ = assert_valid_categories(random_words)
+
+    
+
+
+
+    
