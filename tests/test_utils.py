@@ -13,6 +13,7 @@ from geococo.utils import (
     estimate_schema,
     mask_label,
     assert_valid_categories,
+    valid_category_id
 )
 from geococo.window_schema import WindowSchema
 import geopandas as gpd
@@ -312,3 +313,19 @@ def test_assert_valid_categories() -> None:
 
     with pytest.raises(ValueError):
         _ = assert_valid_categories(random_words)
+
+
+def test_valid_category_id() -> None:
+    categories = np.random.randint(0, 10, 5).astype(float).astype(str) #castable
+    assert valid_category_id(categories = categories)
+     
+    categories = np.random.randn(5).astype(str) #castable with precision loss
+    assert not valid_category_id(categories = categories)
+
+    categories = np.random.choice(list(ascii_lowercase), 5) #non-castable
+    assert not valid_category_id(categories = categories)
+
+
+    
+    
+    

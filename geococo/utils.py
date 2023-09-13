@@ -255,3 +255,21 @@ def assert_valid_categories(
         raise ValueError(f"Category values (str) have to fit in {max_dtype}")
 
     return str_categories.astype(max_dtype)
+
+
+def valid_category_id(categories: np.ndarray) -> bool:
+        """
+        Check whether values from a given array can be cast to category_id
+
+        :param categories: numpy array containing category values
+        :return: boolean indicating castable category_id column
+        """
+        try:
+            # attemping to cast to float (from arbitrary type)
+            categories = categories.astype(float)
+            # checking if castable to int without precision loss
+            valid = np.all(categories.astype(int) == categories)
+        except ValueError as ve:
+            valid = False
+        return valid
+    
