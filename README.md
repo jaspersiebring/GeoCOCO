@@ -158,8 +158,3 @@ session = fo.launch_app(coco_dataset, port=5151)
   <img src="https://github.com/jaspersiebring/GeoCOCO/assets/25051531/f8ab55da-b3cd-4beb-b082-7946e712ea5c" width="45%" height = 250/>
   <img src="https://github.com/jaspersiebring/GeoCOCO/assets/25051531/9a796a54-ffc2-49c3-95bc-59e5c0dd1d7c" width="45%" height = 250 />
 </p>
-
-
-# Planned features
-- [QGIS plugin](https://github.com/jaspersiebring/geococo-qgis-plugin).
-- Data visualization with `pycocotool`'s plotting functionality

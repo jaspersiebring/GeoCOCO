@@ -27,29 +27,26 @@ def labels_to_dataset(
     src: DatasetReader,
     labels: gpd.GeoDataFrame,
     window_bounds: List[Tuple[int, int]],
+    category_attribute: str = "category_id",
 ) -> CocoDataset:
     """Move across a given geotiff, converting all intersecting labels to COCO
     annotations and appending them to a COCODataset model. This is done through
-    rasterio.Window objects, the bounds of which you can set with window_bounds
-    (also determines the size of the output images associated with the
-    Annotation instances). The degree of overlap between these windows is
-    determined by the dimensions of the given labels to maximize representation
-    in the resulting dataset.
+    rasterio.Window objects, the bounds of which you can set with window_bounds (also
+    determines the size of the output images associated with the Annotation instances).
+    The degree of overlap between these windows is determined by the dimensions of the
+    given labels to maximize representation in the resulting dataset.
 
-    The "iscrowd" attribute (see
-    https://cocodataset.org/#format-data)
-    is determined by whether    the respective labels are Polygon or
-    MultiPolygon instances. The "category_id" attribute,    which
-    represents class or category identifiers, is expected to be present
-    in the given labels    GeoDataFrame under the same name.
+    The "iscrowd" attribute (see https://cocodataset.org/#format-data) is determined by
+    whether    the respective labels are Polygon or MultiPolygon instances. The
+    "category_id" attribute,    which represents class or category identifiers, is
+    expected to be present in the given labels    GeoDataFrame under the same name.
 
-    :param dataset: CocoDataset model to append images and annotations
-        to
+    :param dataset: CocoDataset model to append images and annotations to
     :param images_dir: output directory for all label images
     :param src: open rasterio reader for input raster
-    :param labels: GeoDataFrame containing labels and class_info
-        ('category_id')
+    :param labels: GeoDataFrame containing labels and class_info ('category_id')
     :param window_bounds: a list of window_bounds to attempt to use ()
+    :param category_attribute: Column containing category_id values
     :return: The COCO dataset with appended Images and Annotations
     """
 
@@ -60,13 +57,16 @@ def labels_to_dataset(
     coco_profile.update({"dtype": np.uint8, "nodata": nodata_value, "driver": "JPEG"})
     schema = estimate_schema(gdf=labels, src=src, window_bounds=window_bounds)
     n_windows = generate_window_offsets(window=parent_window, schema=schema).shape[0]
-    
+
     # sets dataset.next_source_id and possibly bumps minor version
     dataset.add_source(source_path=pathlib.Path(src.name))
-    
+
     # bumps major version if images_dir has been used in this dataset before
     dataset.verify_new_output_dir(images_dir=images_dir)
-    
+
+    # sets dataset._category_mapper
+    dataset.add_categories(categories=labels[category_attribute].unique())
+
     for child_window in tqdm(
         window_factory(parent_window=parent_window, schema=schema), total=n_windows
     ):
@@ -129,7 +129,9 @@ def labels_to_dataset(
 
         # Iteratively add Annotation models to dataset (also bumps next_annotation_id)
         with rasterio.open(window_image_path) as windowed_src:
-            for _, window_label in window_labels.sort_values("category_id").iterrows():
+            for _, window_label in window_labels.sort_values(
+                category_attribute
+            ).iterrows():
                 label_mask = mask_label(
                     input_raster=windowed_src, label=window_label.geometry
                 )
@@ -140,11 +142,13 @@ def labels_to_dataset(
                 bounding_box = cv2.boundingRect(label_mask.astype(np.uint8))
                 area = np.sum(label_mask)
                 iscrowd = 1 if isinstance(window_label.geometry, MultiPolygon) else 0
+                category_name = str(window_label[category_attribute])
+                category_id = dataset._category_mapper[category_name]
 
                 annotation_instance = Annotation(
                     id=dataset.next_annotation_id,
                     image_id=dataset.next_image_id,
-                    category_id=window_label["category_id"],
+                    category_id=category_id,
                     segmentation=rle,  # type: ignore
                     area=area,
                     bbox=bounding_box,

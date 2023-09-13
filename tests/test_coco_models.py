@@ -60,7 +60,7 @@ def test_dataset_add_images():
     dataset = CocoDataset(info=Info())
     assert dataset.next_annotation_id == 1
     assert dataset.next_image_id == 1
-    
+
     n_images = np.random.randint(2, 10)
 
     for _ in range(n_images):
@@ -75,6 +75,7 @@ def test_dataset_add_images():
 
     assert n_images == dataset.next_image_id - 1
     assert n_images == len(dataset.images)
+
 
 def test_info():
     """Simple instance test."""
@@ -130,9 +131,9 @@ def test_source():
 
 
 def test_dataset_add_sources():
-    """Checks proper incrementation of source_id"""
+    """Checks proper incrementation of source_id."""
 
-    # Bit different from the other ids since we check for duplication 
+    # Bit different from the other ids since we check for duplication
     # and only increment if new
     dataset = CocoDataset(info=Info())
     assert dataset.next_source_id == 0
@@ -144,12 +145,12 @@ def test_dataset_add_sources():
     assert dataset.next_source_id == 2
 
 
-def test_dataset_versions(tmp_path: pathlib.Path):
-    """Checks proper incrementation of dataset versions"""
+def test_dataset_versions():
+    """Checks proper incrementation of dataset versions."""
 
     dataset = CocoDataset(info=Info())
     assert dataset.info.version == "0.0.0"
-    
+
     # minor bump if same output_dir but different raster_source
     dataset.add_source(source_path=pathlib.Path("a"))
     assert dataset.info.version == "0.1.0"
@@ -161,3 +162,33 @@ def test_dataset_versions(tmp_path: pathlib.Path):
     # major bump: if new output_dir
     dataset.verify_new_output_dir(images_dir=pathlib.Path("b"))
     assert dataset.info.version == "1.0.0"
+
+
+def test_add_categories():
+    """Checks independent mapping of category_attribute to class_ids."""
+
+    dataset = CocoDataset(info=Info())
+    assert dataset.categories == []
+    assert dataset._category_mapper == {}
+
+    # adding three unique classes
+    categories = np.array(["A", "B", "B", "E", "E"])
+    dataset.add_categories(categories=categories)
+
+    # checking length and sequential category_ids
+    assert np.unique(categories).size == len(dataset._category_mapper)
+    assert np.unique(categories).size == len(dataset.categories)
+    assert np.all(np.diff(list(dataset._category_mapper.values())) == 1)
+
+    # check if existing key value pairs don't change
+    # done by adding a bunch of existing classes and one new one
+    initial_mapper = dataset._category_mapper.copy()
+    categories = np.array(["One", "Two", "Two", "Five", "Five", "Six", "Six"])
+    dataset.add_categories(categories=categories)
+    subset_mapper = {
+        key: value
+        for key, value in dataset._category_mapper.items()
+        if key in initial_mapper.keys()
+    }
+    assert initial_mapper == subset_mapper
+    assert np.all(np.diff(list(dataset._category_mapper.values())) == 1)

@@ -13,6 +13,7 @@ def test_labels_to_dataset_new_dataset(
     overlapping_labels: gpd.GeoDataFrame,
 ) -> None:
     json_path = tmp_path / "dataset.json"
+    category_attribute = "category_id"
 
     with rasterio.open(test_raster) as raster_source:
         # Creating empty CocoDataset as input for labels_to_dataset
@@ -24,13 +25,13 @@ def test_labels_to_dataset_new_dataset(
             src=raster_source,
             labels=overlapping_labels,
             window_bounds=[(256, 256)],
+            category_attribute=category_attribute
         )
 
         # Checking if output has correct classes
-        unique_ann_ids = np.unique([ann.category_id for ann in dataset.annotations])
-        assert np.all(
-            np.isin(unique_ann_ids, overlapping_labels["category_id"].unique())
-        )
+        dataset_class_names =  np.array([cat.name for cat in dataset.categories])
+        labels_class_names = overlapping_labels[category_attribute].unique().astype(str)
+        assert np.all(np.isin(dataset_class_names, labels_class_names))
 
         # Dumping to JSON
         dst_json_data = dataset.model_dump_json()
@@ -51,6 +52,7 @@ def test_labels_to_dataset_append_dataset(
     test_raster: pathlib.Path,
     overlapping_labels: gpd.GeoDataFrame,
 ) -> None:
+    category_attribute = "category_id"
     with rasterio.open(test_raster) as raster_source:
         # Creating empty CocoDataset as input for labels_to_dataset
         info = Info(version="0.0.1", date_created=datetime.now())
@@ -61,13 +63,13 @@ def test_labels_to_dataset_append_dataset(
             src=raster_source,
             labels=overlapping_labels,
             window_bounds=[(256, 256)],
+            category_attribute=category_attribute
         )
 
         # Checking if output has correct classes
-        unique_ann_ids = np.unique([ann.category_id for ann in dataset.annotations])
-        assert np.all(
-            np.isin(unique_ann_ids, overlapping_labels["category_id"].unique())
-        )
+        dataset_class_names =  np.array([cat.name for cat in dataset.categories])
+        labels_class_names = overlapping_labels[category_attribute].unique().astype(str)
+        assert np.all(np.isin(dataset_class_names, labels_class_names))
 
         # Rerunning with existing CocoDataset to verify append
         previous_dataset = dataset.copy(deep=True)
