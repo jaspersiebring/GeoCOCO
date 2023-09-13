@@ -2,15 +2,15 @@ from __future__ import annotations
 import numpy as np
 import pathlib
 from datetime import datetime
-from typing import List, Optional, Union, Dict
+from typing import List, Optional, Dict
 from typing_extensions import TypedDict
-from numpy.typing import ArrayLike
 
 from pydantic import BaseModel, ConfigDict, InstanceOf, model_validator
 from semver.version import Version
 from geococo.utils import assert_valid_categories
 
-class CocoDataset(BaseModel):    
+
+class CocoDataset(BaseModel):
     info: Info
     images: List[InstanceOf[Image]] = []
     annotations: List[InstanceOf[Annotation]] = []
@@ -58,8 +58,8 @@ class CocoDataset(BaseModel):
     def add_categories(self, categories: np.ndarray) -> None:
         # checking if categories are castable to str and under a certain size
         categories = assert_valid_categories(categories=np.unique(categories))
-        
-        # filtering existing categories 
+
+        # filtering existing categories
         category_mask = np.isin(categories, list(self._category_mapper.keys()))
         new_categories = categories[~category_mask]
 
@@ -70,7 +70,9 @@ class CocoDataset(BaseModel):
 
         # instance and append new Category objects to dataset
         for category_name, category_id in category_dict.items():
-            category = Category(id = category_id, name = str(category_name), supercategory="1")
+            category = Category(
+                id=category_id, name=str(category_name), supercategory="1"
+            )
             self.categories.append(category)
 
         # update existing category_mapper with new categories

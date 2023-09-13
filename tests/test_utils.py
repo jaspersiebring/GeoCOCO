@@ -12,7 +12,7 @@ from geococo.utils import (
     estimate_average_bounds,
     estimate_schema,
     mask_label,
-    assert_valid_categories
+    assert_valid_categories,
 )
 from geococo.window_schema import WindowSchema
 import geopandas as gpd
@@ -57,7 +57,7 @@ def test_window_intersect(
     overlapping_labels: gpd.GeoDataFrame, test_raster: pathlib.Path
 ) -> None:
     with rasterio.open(test_raster) as raster_source:
-        # outer polygons have diameter of 2 so resulting window 
+        # outer polygons have diameter of 2 so resulting window
         # is 82x82 and offset is 9 (10-2/2)
         window = window_intersect(
             input_raster=raster_source, input_vector=overlapping_labels
@@ -284,27 +284,31 @@ def test_window_factory_boundless() -> None:
     assert np.any(window_extents[:, 1] >= window.height)
 
 
-
 def test_assert_valid_categories() -> None:
-    # almost all python objects can be represented by str so we just try casting and verify char length
+    # almost all python objects can be represented by str
+    # so we just try casting and verify char length
     category_lengths = [10, 49, 50]
-    random_words = np.array(["".join(np.random.choice(list(ascii_lowercase), cl))  for cl in category_lengths])
-    
+    random_words = np.array(
+        [
+            "".join(np.random.choice(list(ascii_lowercase), cl))
+            for cl in category_lengths
+        ]
+    )
+
     _ = assert_valid_categories(random_words)
 
-    # float64 
+    # float64
     random_numbers = np.random.randn(3).astype(np.float64)
     _ = assert_valid_categories(random_numbers)
 
     # longer than <U50
     category_lengths = [51, 70, 120]
-    random_words = np.array(["".join(np.random.choice(list(ascii_lowercase), cl))  for cl in category_lengths])
+    random_words = np.array(
+        [
+            "".join(np.random.choice(list(ascii_lowercase), cl))
+            for cl in category_lengths
+        ]
+    )
 
     with pytest.raises(ValueError):
         _ = assert_valid_categories(random_words)
-
-    
-
-
-
-    

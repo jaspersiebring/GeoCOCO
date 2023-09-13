@@ -13,14 +13,11 @@ from geococo.window_schema import WindowSchema
 def mask_label(
     input_raster: DatasetReader, label: Union[Polygon, MultiPolygon]
 ) -> np.ndarray:
-    """Masks out an label from input_raster and flattens it to a 2D binary
-    array. If it doesn't overlap, the resulting mask will only consist of False
-    bools.
+    """Masks out an label from input_raster and flattens it to a 2D binary array. If it
+    doesn't overlap, the resulting mask will only consist of False bools.
 
-    :param input_raster: open rasterio DatasetReader for the input
-        raster
-    :param label: Polygon object representing the area to be masked
-        (i.e. label)
+    :param input_raster: open rasterio DatasetReader for the input raster
+    :param label: Polygon object representing the area to be masked (i.e. label)
     :return: A 2D binary array representing the label
     """
 
@@ -39,14 +36,12 @@ def mask_label(
 def window_intersect(
     input_raster: DatasetReader, input_vector: gpd.GeoDataFrame
 ) -> Window:
-    """Generates a Rasterio Window from the intersecting extents of the input
-    data. It also verifies if the input data share the same CRS and if they
-    physically overlap.
+    """Generates a Rasterio Window from the intersecting extents of the input data. It
+    also verifies if the input data share the same CRS and if they physically overlap.
 
     :param input_raster: rasterio dataset (i.e. input image)
     :param input_vector: geopandas geodataframe (i.e. input labels)
-    :return: rasterio window that represent the intersection between
-        input data extents
+    :return: rasterio window that represent the intersection between input data extents
     """
 
     if input_vector.crs != input_raster.crs:
@@ -73,13 +68,11 @@ def window_intersect(
 def reshape_image(
     img_array: np.ndarray, shape: Tuple[int, int, int], padding_value: int = 0
 ) -> np.ndarray:
-    """Reshapes 3D numpy array to match given 3D shape, done through slicing or
-    padding.
+    """Reshapes 3D numpy array to match given 3D shape, done through slicing or padding.
 
     :param img_array: the numpy array to be reshaped
     :param shape: the desired shape (bands, rows, cols)
-    :param padding_value: what value to pad img_array with (if too
-        small)
+    :param padding_value: what value to pad img_array with (if too small)
     :return: numpy array in desired shape
     """
 
@@ -98,14 +91,14 @@ def reshape_image(
 
 
 def generate_window_polygon(datasource: DatasetReader, window: Window) -> Polygon:
-    """Turns the spatial bounds of a given window to a shapely.Polygon object
-    in a given dataset's CRS.
+    """Turns the spatial bounds of a given window to a shapely.Polygon object in a given
+    dataset's CRS.
 
-    :param datasource: a rasterio DatasetReader object that provides the
-        affine transformation
+    :param datasource: a rasterio DatasetReader object that provides the affine
+        transformation
     :param window: bounds to represent as Polygon
-    :return: shapely Polygon representing the spatial bounds of a given
-        window in a given CRS
+    :return: shapely Polygon representing the spatial bounds of a given window in a
+        given CRS
     """
 
     window_transform = datasource.window_transform(window)
@@ -117,8 +110,7 @@ def generate_window_polygon(datasource: DatasetReader, window: Window) -> Polygo
 def generate_window_offsets(window: Window, schema: WindowSchema) -> np.ndarray:
     """Computes an array of window offsets bound by a given window.
 
-    :param window: the bounding window (i.e. offsets will be within its
-        bounds)
+    :param window: the bounding window (i.e. offsets will be within its bounds)
     :param schema: the parameters for the window generator
     :return: an array of window offsets within the bounds of window
     """
@@ -143,14 +135,14 @@ def generate_window_offsets(window: Window, schema: WindowSchema) -> np.ndarray:
 def window_factory(
     parent_window: Window, schema: WindowSchema, boundless: bool = True
 ) -> Generator[Window, None, None]:
-    """Generator that produces rasterio.Window objects in predetermined steps,
-    within the given Window.
+    """Generator that produces rasterio.Window objects in predetermined steps, within
+    the given Window.
 
-    :param parent_window: the window that provides the bounds for all
-        child_window objects
+    :param parent_window: the window that provides the bounds for all child_window
+        objects
     :param schema: the parameters that determine the window steps
-    :param boundless: whether the child_window should be clipped by the
-        parent_window or not
+    :param boundless: whether the child_window should be clipped by the parent_window or
+        not
     :yield: a rasterio.Window used for windowed reading/writing
     """
 
@@ -174,8 +166,7 @@ def estimate_average_bounds(
 ) -> Tuple[float, float]:
     """Estimates the average size of all features in a GeoDataFrame.
 
-    :param gdf: GeoDataFrame that contains all features (i.e.
-        shapely.Geometry objects)
+    :param gdf: GeoDataFrame that contains all features (i.e. shapely.Geometry objects)
     :param quantile: what quantile will represent the feature population
     :return: a tuple of floats representing average width and height
     """
@@ -195,19 +186,16 @@ def estimate_schema(
     quantile: float = 0.9,
     window_bounds: List[Tuple[int, int]] = [(256, 256), (512, 512)],
 ) -> WindowSchema:
-    """Attempts to find a schema that is able to represent the average
-    GeoDataFrame feature (i.e. sufficient overlap) but within the bounds given
-    by window_bounds.
+    """Attempts to find a schema that is able to represent the average GeoDataFrame
+    feature (i.e. sufficient overlap) but within the bounds given by window_bounds.
 
-    :param gdf: GeoDataFrame that contains features that determine the
-        degree of overlap
-    :param src: The rasterio DataSource associated with the resulting
-        schema (i.e. bounds and pixelsizes)
+    :param gdf: GeoDataFrame that contains features that determine the degree of overlap
+    :param src: The rasterio DataSource associated with the resulting schema (i.e.
+        bounds and pixelsizes)
     :param quantile: what quantile will represent the feature population
-    :param window_bounds: a list of possible limits for the window
-        generators
-    :return: (if found) a viable WindowSchema with sufficient overlap
-        within the window_bounds
+    :param window_bounds: a list of possible limits for the window generators
+    :return: (if found) a viable WindowSchema with sufficient overlap within the
+        window_bounds
     """
 
     # estimating the required overlap between windows for labels to be represented fully
@@ -243,10 +231,11 @@ def estimate_schema(
     return schema
 
 
-def assert_valid_categories(categories: np.ndarray, max_dtype: str = "<U50") -> np.ndarray:
-    """
-    Checks if all elements in categories array can be represented by strings 
-    of a certain length (defaults to <U50)
+def assert_valid_categories(
+    categories: np.ndarray, max_dtype: str = "<U50"
+) -> np.ndarray:
+    """Checks if all elements in categories array can be represented by strings of a
+    certain length (defaults to <U50)
 
     :param categories: numpy array containing category values
     :param max_dtype: numpy str dtype with char size
@@ -260,9 +249,9 @@ def assert_valid_categories(categories: np.ndarray, max_dtype: str = "<U50") -> 
         str_categories = categories.astype(str)
     except Exception as e:
         raise ValueError("Category values need to be castable to str") from e
-    
+
     # checking if categories can be castable to str of a certain length (e.g. <U50)
     if not np.can_cast(str_categories, max_dtype):
         raise ValueError(f"Category values (str) have to fit in {max_dtype}")
-    
+
     return str_categories.astype(max_dtype)
