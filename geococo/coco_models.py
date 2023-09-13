@@ -60,7 +60,7 @@ class CocoDataset(BaseModel):
         categories = assert_valid_categories(categories=np.unique(categories))
         
         # filtering existing categories 
-        category_mask = np.isin(categories, self._category_mapper.keys())
+        category_mask = np.isin(categories, list(self._category_mapper.keys()))
         new_categories = categories[~category_mask]
 
         # generating mapper from new categories

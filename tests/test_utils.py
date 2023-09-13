@@ -288,8 +288,7 @@ def test_window_factory_boundless() -> None:
 def test_assert_valid_categories() -> None:
     # almost all python objects can be represented by str so we just try casting and verify char length
     category_lengths = [10, 49, 50]
-    random_words = [ "".join(np.random.choice(list(ascii_lowercase), cl))  for cl in category_lengths]
-    random_words = np.array(random_words)
+    random_words = np.array(["".join(np.random.choice(list(ascii_lowercase), cl))  for cl in category_lengths])
     
     _ = assert_valid_categories(random_words)
 
@@ -299,8 +298,7 @@ def test_assert_valid_categories() -> None:
 
     # longer than <U50
     category_lengths = [51, 70, 120]
-    random_words = [ "".join(np.random.choice(list(ascii_lowercase), cl))  for cl in category_lengths]
-    random_words = np.array(random_words)
+    random_words = np.array(["".join(np.random.choice(list(ascii_lowercase), cl))  for cl in category_lengths])
 
     with pytest.raises(ValueError):
         _ = assert_valid_categories(random_words)
