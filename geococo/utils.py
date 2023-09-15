@@ -1,6 +1,7 @@
-from typing import Generator, List, Tuple, Union
+from typing import Generator, List, Tuple, Union, Optional
 import geopandas as gpd
 import numpy as np
+import pandera as pa
 from rasterio.io import DatasetReader
 from rasterio.transform import array_bounds
 from rasterio.windows import Window, from_bounds
@@ -8,6 +9,7 @@ from rasterio.errors import WindowError
 from rasterio.mask import mask as riomask
 from shapely.geometry import MultiPolygon, Polygon, box
 from geococo.window_schema import WindowSchema
+from geopandas.array import GeometryDtype
 
 
 def mask_label(
@@ -267,3 +269,32 @@ def castable_category_id(categories: np.ndarray) -> bool:
             castable = False
         return castable
     
+
+def validate_labels(labels: gpd.GeoDataFrame, category_id_col: Optional[str] = "category_id", category_name_col: Optional[str] = None, supercategory_col: Optional[str] = None) -> gpd.GeoDataFrame:
+    """
+    Validates all necessary attributes for a geococo-viable GeoDataFrame. It also 
+    checks for the presence of either category_id or category_name values and ensures 
+    valid geometry.
+    
+    :param labels: GeoDataFrame containing labels and category attributes
+    :param category_id_col: Column name that holds category_id values
+    :param category_name_col: Column name that holds category_name values
+    :param supercategory_col: Column name that holds supercategory values
+    :return: Validated GeoDataFrame with coerced dtypes
+    """    
+    
+    schema_dict = {
+        "geometry": pa.Column(GeometryDtype(), pa.Check(lambda geoms: geoms.is_valid, error = "Invalid geometry found"), nullable = False),
+        category_id_col: pa.Column(int, pa.Check.greater_than(0), required=False, nullable=False, coerce = True),
+        category_name_col: pa.Column(str, required=False, nullable=False),
+        supercategory_col: pa.Column(str, required=False, nullable=False, default="1")
+    }
+    
+    schema = pa.DataFrameSchema(schema_dict)
+    validated_labels = schema.validate(labels)
+    
+    req_cols = np.array([category_id_col, category_name_col])
+    if not np.isin(req_cols, validated_labels.columns).any():
+        raise AttributeError("At least one category attribute must present")
+
+    return validated_labels
