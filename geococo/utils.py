@@ -9,6 +9,7 @@ from rasterio.errors import WindowError
 from rasterio.mask import mask as riomask
 from shapely.geometry import MultiPolygon, Polygon, box
 from geococo.window_schema import WindowSchema
+from geococo.coco_models import CocoDataset
 from geopandas.array import GeometryDtype
 
 
@@ -287,7 +288,7 @@ def validate_labels(labels: gpd.GeoDataFrame, category_id_col: Optional[str] = "
         "geometry": pa.Column(GeometryDtype(), pa.Check(lambda geoms: geoms.is_valid, error = "Invalid geometry found"), nullable = False),
         category_id_col: pa.Column(int, pa.Check.greater_than(0), required=False, nullable=False, coerce = True),
         category_name_col: pa.Column(str, required=False, nullable=False),
-        supercategory_col: pa.Column(str, required=False, nullable=False, default="1")
+        supercategory_col: pa.Column(str, required=False, nullable=False)
     }
     
     schema = pa.DataFrameSchema(schema_dict)
@@ -295,6 +296,11 @@ def validate_labels(labels: gpd.GeoDataFrame, category_id_col: Optional[str] = "
     
     req_cols = np.array([category_id_col, category_name_col])
     if not np.isin(req_cols, validated_labels.columns).any():
-        raise AttributeError("At least one category attribute must present")
+        raise AttributeError("At least one category attribute must be present")
 
     return validated_labels
+
+def update_labels(labels: gpd.GeoDataFrame, category_id_col: Optional[str] = "category_id", category_name_col: Optional[str] = None, supercategory_col: Optional[str] = None, dataset: CocoDataset) -> gpd.GeoDataFrame:
+
+    # finish
+    return labels

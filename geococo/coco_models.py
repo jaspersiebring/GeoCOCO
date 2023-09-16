@@ -1,13 +1,14 @@
 from __future__ import annotations
 import numpy as np
 import pathlib
+import pandas as pd
 from datetime import datetime
-from typing import List, Optional, Dict
+from typing import List, Optional
 from typing_extensions import TypedDict
 
 from pydantic import BaseModel, ConfigDict, InstanceOf, model_validator
 from semver.version import Version
-from geococo.utils import assert_valid_categories
+
 
 
 class CocoDataset(BaseModel):
@@ -19,20 +20,13 @@ class CocoDataset(BaseModel):
     _next_image_id: int = 1
     _next_annotation_id: int = 1
     _next_source_id: int = 1
-    _category_mapper: Dict = {}
 
     @model_validator(mode="after")
     def _set_ids(self) -> CocoDataset:
         self._next_image_id = len(self.images) + 1
         self._next_annotation_id = len(self.annotations) + 1
         self._next_source_id = len(self.sources)
-        self._category_mapper = self._get_category_mapper()
         return self
-
-    def _get_category_mapper(self) -> Dict:
-        category_data = [(category.name, category.id) for category in self.categories]
-        category_mapper = dict(category_data) if category_data else {}
-        return category_mapper
 
     def add_annotation(self, annotation: Annotation) -> None:
         self.annotations.append(annotation)
@@ -54,29 +48,51 @@ class CocoDataset(BaseModel):
             self.bump_version(bump_method="minor")
 
         self._next_source_id = source.id
+    
+    
+    def add_categories(self, category_ids: Optional[np.ndarray], category_names: Optional[np.ndarray], supercategory_names: Optional[np.ndarray]) -> None:
 
-    def add_categories(self, categories: np.ndarray) -> None:
-        # checking if categories are castable to str and under a certain size
-        categories = assert_valid_categories(categories=np.unique(categories))
+        # Loading all existing Category instances as a single dataframe
+        category_pd = pd.DataFrame([category.dict() for category in self.categories])
+        super_default = "1"
 
-        # filtering existing categories
-        category_mask = np.isin(categories, list(self._category_mapper.keys()))
-        new_categories = categories[~category_mask]
+        # creating supercategory_names if not exists
+        if not isinstance(supercategory_names, np.ndarray) and isinstance(category_ids, np.ndarray):
+            supercategory_names = np.full(shape=category_ids.shape, fill_value=super_default)
+        elif not isinstance(supercategory_names, np.ndarray) and isinstance(category_names, np.ndarray):
+            supercategory_names = np.full(shape=category_names.shape, fill_value=super_default)
+        else:
+            raise AttributeError("At least one category attribute must be present")
+        
+        # i.e. all new and all present
+        if isinstance(category_ids, np.ndarray) and isinstance(category_names, np.ndarray):
+            assert category_ids.shape == category_names.shape
+            id_mask = np.isin(category_ids, category_pd["id"].values)        
+            for cid, name, supercategory in zip(category_ids[~id_mask], category_names[~id_mask], supercategory_names[~id_mask]):
+                category = Category(id=cid, name=name, supercategory=supercategory)    
+                self.annotations.append(category)
+        elif isinstance(category_ids, np.ndarray):
+            #i.e. if only category_ids are given, no names
+            id_mask = np.isin(category_ids, category_pd["id"].values)
+            
+            for cid, name, supercategory in zip(category_ids[~id_mask], category_ids[~id_mask].astype(str), supercategory_names[~id_mask]):
+                category = Category(id=cid, name=name, supercategory=supercategory)    
+                self.annotations.append(category)
+        elif isinstance(category_names, np.ndarray):
+            #i.e. if only category_names are given, no ids
+            name_mask = np.isin(category_names, category_pd["name"].values)
 
-        # generating mapper from new categories
-        start = len(self._category_mapper.values()) + 1
-        end = start + new_categories.size
-        category_dict = dict(zip(new_categories, np.arange(start, end)))
+            #new names, arange from latest id    
+            start = category_pd.loc[category_pd["name"].isin(category_names[name_mask]), "id"].max() + 1
+            end = start + category_names[~name_mask].size
+            new_category_ids = np.arange(start, end)
+        
+            for cid, name, supercategory in zip(new_category_ids, category_names[~name_mask], supercategory_names[~name_mask]):
+                category = Category(id=cid, name=name, supercategory=supercategory)    
+                self.annotations.append(category)
+        else:
+            raise AttributeError("At least one category attribute must be present")
 
-        # instance and append new Category objects to dataset
-        for category_name, category_id in category_dict.items():
-            category = Category(
-                id=category_id, name=str(category_name), supercategory="1"
-            )
-            self.categories.append(category)
-
-        # update existing category_mapper with new categories
-        self._category_mapper.update(category_dict)
 
     def bump_version(self, bump_method: str) -> None:
         bump_methods = ["patch", "minor", "major"]
