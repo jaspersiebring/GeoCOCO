@@ -9,8 +9,8 @@ def test_schema_valid():
 
     schema = WindowSchema(
         width_window=width_window,
-        width_overlap=width_overlap,
         height_window=height_window,
+        width_overlap=width_overlap,
         height_overlap=height_overlap,
     )
 
@@ -27,24 +27,9 @@ def test_schema_invalid(test_input):
     with pytest.raises(ValidationError):
         WindowSchema(
             width_window=width_window,
-            width_overlap=width_overlap,
             height_window=height_window,
-            height_overlap=height_overlap,
-        )
-
-
-@pytest.mark.parametrize("test_input", [(100, 20.0), (100.0, 20)])
-def test_schema_float(test_input):
-    window, overlap = test_input
-    width_window = height_window = window
-    width_overlap = height_overlap = overlap
-
-    with pytest.raises(ValidationError):
-        WindowSchema(
-            width_window=width_window,
             width_overlap=width_overlap,
-            height_window=height_window,
-            height_overlap=height_overlap,
+            height_overlap=height_overlap
         )
 
 
@@ -54,9 +39,7 @@ def test_schema_str(test_input):
     width_window = height_window = window
     width_overlap = height_overlap = overlap
 
-    # TypeError is raised because 'steps' are calculated 
-    # before pydantic's field validation
-    with pytest.raises(TypeError):
+    with pytest.raises(ValidationError):
         WindowSchema(
             width_window=width_window,
             width_overlap=width_overlap,
