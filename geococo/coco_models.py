@@ -50,46 +50,66 @@ class CocoDataset(BaseModel):
     
     
     def add_categories(self, category_ids: Optional[np.ndarray], category_names: Optional[np.ndarray], supercategory_names: Optional[np.ndarray]) -> None:
-        # Loading all existing Category instances as a single dataframe
-        category_pd = pd.DataFrame([category.dict() for category in self.categories])
+        # initializing values
         super_default = "1"
-
-        # creating supercategory_names if not exists
-        if not isinstance(supercategory_names, np.ndarray) and isinstance(category_ids, np.ndarray):
-            supercategory_names = np.full(shape=category_ids.shape, fill_value=super_default)
-        elif not isinstance(supercategory_names, np.ndarray) and isinstance(category_names, np.ndarray):
-            supercategory_names = np.full(shape=category_names.shape, fill_value=super_default)
-        else:
-            raise AttributeError("At least one category attribute must be present")
+        names_present = ids_present = False
         
-        # i.e. all new and all present
-        if isinstance(category_ids, np.ndarray) and isinstance(category_names, np.ndarray):
-            assert category_ids.shape == category_names.shape
-            id_mask = np.isin(category_ids, category_pd["id"].values)        
-            for cid, name, supercategory in zip(category_ids[~id_mask], category_names[~id_mask], supercategory_names[~id_mask]):
-                category = Category(id=cid, name=name, supercategory=supercategory)    
-                self.categories.append(category)
-        elif isinstance(category_ids, np.ndarray):
-            #i.e. if only category_ids are given, no names
-            id_mask = np.isin(category_ids, category_pd["id"].values)
+        # Loading all existing Category instances as a single dataframe
+        category_pd = pd.DataFrame([category.dict() for category in self.categories], columns=Category.schema()["properties"].keys())
+        
+        # checking if category_names can be assigned to uid_array (used to check duplicates)
+        if isinstance(category_names, np.ndarray):
+            uid_array = category_names
+            uid_attribute = "name"
+            names_present = True
+
+        # checking if category_ids can be assigned to uid_array (used to check duplicates)
+        if isinstance(category_ids, np.ndarray):
+            uid_array = category_ids # overrides existing array because ids are leading
+            uid_attribute = "id"
+            ids_present = True
+        if not names_present and not ids_present:
+            raise AttributeError("At least one category attribute must be present")
+
+        # masking out duplicate values and exiting if all duplicates
+        original_shape = uid_array.shape
+        _, indices = np.unique(uid_array, return_index=True)
+        uid_array = uid_array[indices]
+        member_mask = np.isin(uid_array, category_pd[uid_attribute])
+        new_members = uid_array[~member_mask]
+        new_shape = new_members.shape
+        if new_shape[0] == 0:
+            return
             
-            for cid, name, supercategory in zip(category_ids[~id_mask], category_ids[~id_mask].astype(str), supercategory_names[~id_mask]):
-                category = Category(id=cid, name=name, supercategory=supercategory)    
-                self.categories.append(category)
-        elif isinstance(category_names, np.ndarray):
-            #i.e. if only category_names are given, no ids
-            name_mask = np.isin(category_names, category_pd["name"].values)
-
-            #new names, arange from latest id    
-            start = category_pd.loc[category_pd["name"].isin(category_names[name_mask]), "id"].max() + 1
-            end = start + category_names[~name_mask].size
-            new_category_ids = np.arange(start, end)
-        
-            for cid, name, supercategory in zip(new_category_ids, category_names[~name_mask], supercategory_names[~name_mask]):
-                category = Category(id=cid, name=name, supercategory=supercategory)    
-                self.categories.append(category)
+        # creating default supercategory_names if not given
+        if not isinstance(supercategory_names, np.ndarray):
+            supercategory_names = np.full(shape=new_shape, fill_value=super_default)
         else:
-            raise AttributeError("At least one category attribute must be present")
+            assert supercategory_names.shape == original_shape
+            supercategory_names = supercategory_names[indices][~member_mask]
+
+        # creating default category_names if not given (str version of ids)
+        if ids_present and not names_present:
+            category_names = new_members.astype(str)
+            category_ids = new_members
+        # creating ids if not given (incremental sequence starting from last known id)
+        elif names_present and not ids_present:
+            pandas_mask = category_pd[uid_attribute].isin(uid_array[member_mask])
+            max_id = category_pd.loc[pandas_mask, "id"].max()
+            start = np.nansum([max_id, 1])
+            end = start + new_members.size
+            category_ids = np.arange(start, end)
+            category_names = new_members
+        # ensuring equal size for category names and ids (if given) 
+        else:
+            assert category_names.shape == original_shape
+            category_names = category_names[indices][~member_mask]
+            category_ids = new_members
+
+        # iteratively instancing and appending Category from set ids, names and supers
+        for cid, name, super in zip(category_ids, category_names, supercategory_names):
+            category = Category(id=cid, name=name, supercategory=super) 
+            self.categories.append(category)
 
     def bump_version(self, bump_method: str) -> None:
         bump_methods = ["patch", "minor", "major"]
