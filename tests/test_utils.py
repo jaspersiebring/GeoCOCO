@@ -13,8 +13,6 @@ from geococo.utils import (
     estimate_average_bounds,
     estimate_schema,
     mask_label,
-    mappable_category_id,
-    castable_category_id,
     validate_labels
 )
 from geococo.window_schema import WindowSchema
@@ -286,47 +284,8 @@ def test_window_factory_boundless() -> None:
     )
     assert np.any(window_extents[:, 0] >= window.width)
     assert np.any(window_extents[:, 1] >= window.height)
-
-
-def test_mappable_category_id() -> None:
-    # almost all python objects can be represented by str so we just check char_length
-    category_lengths = [10, 49, 50]
-    random_words = np.array(
-        [
-            "".join(np.random.choice(list(ascii_lowercase), cl))
-            for cl in category_lengths
-        ]
-    )
-
-    assert mappable_category_id(random_words)
-
-    # float64
-    random_numbers = np.random.randn(3).astype(np.float64)
-    assert mappable_category_id(random_numbers)
-
-    # longer than <U50
-    category_lengths = [51, 70, 120]
-    random_words = np.array(
-        [
-            "".join(np.random.choice(list(ascii_lowercase), cl))
-            for cl in category_lengths
-        ]
-    )
-    assert not mappable_category_id(random_words)
-
     
-def test_castable_category_id() -> None:
-    categories = np.random.randint(0, 10, 5).astype(float).astype(str) #castable
-    assert castable_category_id(categories = categories)
-     
-    categories = np.random.randn(5).astype(str) #castable with precision loss
-    assert not castable_category_id(categories = categories)
 
-    categories = np.random.choice(list(ascii_lowercase), 5) #non-castable
-    assert not castable_category_id(categories = categories)
-
-
-    
 def test_validate_labels(overlapping_labels: gpd.GeoDataFrame):
     # dropping everything except geometry
     labels = overlapping_labels[['geometry']]

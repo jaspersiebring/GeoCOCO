@@ -233,42 +233,6 @@ def estimate_schema(
     return schema
 
 
-def mappable_category_id(categories: np.ndarray, max_dtype: str = "<U50") -> bool:
-    """Checks if all elements in categories array can be represented by strings of a
-    certain length (defaults to <U50; prerequisite for category_mapper values).
-    Since almost any object can be represented by str, this method mainly ensures that 
-    class_names won't be too long (e.g. if `geometry` is used as `category_attribute`)
-
-    :param categories: numpy array containing category values
-    :param max_dtype: numpy str dtype with char size
-    """
-
-    try:
-        # checking if categories can be cast to str of a certain length (e.g. <U50)
-        categories = categories.astype(str)
-        # checking castable to str of limited char length (defaults to <U50)
-        mappable = np.can_cast(categories, max_dtype)
-    except Exception:
-        mappable = False
-    return mappable
-    
-
-def castable_category_id(categories: np.ndarray) -> bool:
-        """
-        Check whether values from a given array can be cast to category_id (i.e. uint8)
-
-        :param categories: numpy array containing category values
-        :return: boolean indicating castable category_id column
-        """
-        try:
-            # attemping to cast to float (from arbitrary type)
-            categories = categories.astype(float)
-            # checking if castable to int without precision loss
-            castable = np.all(categories.astype(int) == categories).astype(bool)
-        except ValueError:
-            castable = False
-        return castable
-
 def validate_labels(labels: gpd.GeoDataFrame, category_id_col: Optional[str] = "category_id", category_name_col: Optional[str] = None, supercategory_col: Optional[str] = None) -> gpd.GeoDataFrame:
     """
     Validates all necessary attributes for a geococo-viable GeoDataFrame. It also 
