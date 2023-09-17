@@ -3,38 +3,37 @@ import numpy as np
 import pathlib
 import pandas as pd
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from typing_extensions import TypedDict
-
-from pydantic import BaseModel, ConfigDict, InstanceOf, model_validator
+from pydantic import BaseModel, ConfigDict, root_validator
+from pydantic.fields import Field
 from semver.version import Version
-
 
 
 class CocoDataset(BaseModel):
     info: Info
-    images: List[InstanceOf[Image]] = []
-    annotations: List[InstanceOf[Annotation]] = []
-    categories: List[InstanceOf[Category]] = []
-    sources: List[InstanceOf[Source]] = []
-    _next_image_id: int = 1
-    _next_annotation_id: int = 1
-    _next_source_id: int = 1
-
-    @model_validator(mode="after")
-    def _set_ids(self) -> CocoDataset:
-        self._next_image_id = len(self.images) + 1
-        self._next_annotation_id = len(self.annotations) + 1
-        self._next_source_id = len(self.sources)
-        return self
-
+    images: List[Image] = []
+    annotations: List[Annotation] = []
+    categories: List[Category] = []
+    sources: List[Source] = []
+    next_image_id: int = Field(default=1, exclude=True)
+    next_annotation_id: int = Field(default=1, exclude=True)
+    next_source_id: int = Field(default=1, exclude=True)
+    
+    @root_validator
+    def _set_ids(cls: CocoDataset, values: Dict[str, Any]) -> Dict[str, Any]:
+        values["next_image_id"] = len(values["images"]) + 1
+        values["next_annotation_id"] = len(values["annotations"]) + 1
+        values["next_source_id"] = len(values["sources"])
+        return values
+        
     def add_annotation(self, annotation: Annotation) -> None:
         self.annotations.append(annotation)
-        self._next_annotation_id += 1
+        self.next_annotation_id += 1
 
     def add_image(self, image: Image) -> None:
         self.images.append(image)
-        self._next_image_id += 1
+        self.next_image_id += 1
 
     def add_source(self, source_path: pathlib.Path) -> None:
         sources = [ssrc for ssrc in self.sources if ssrc.file_name == source_path]
@@ -47,11 +46,10 @@ class CocoDataset(BaseModel):
             self.sources.append(source)
             self.bump_version(bump_method="minor")
 
-        self._next_source_id = source.id
+        self.next_source_id = source.id
     
     
     def add_categories(self, category_ids: Optional[np.ndarray], category_names: Optional[np.ndarray], supercategory_names: Optional[np.ndarray]) -> None:
-
         # Loading all existing Category instances as a single dataframe
         category_pd = pd.DataFrame([category.dict() for category in self.categories])
         super_default = "1"
@@ -70,14 +68,14 @@ class CocoDataset(BaseModel):
             id_mask = np.isin(category_ids, category_pd["id"].values)        
             for cid, name, supercategory in zip(category_ids[~id_mask], category_names[~id_mask], supercategory_names[~id_mask]):
                 category = Category(id=cid, name=name, supercategory=supercategory)    
-                self.annotations.append(category)
+                self.categories.append(category)
         elif isinstance(category_ids, np.ndarray):
             #i.e. if only category_ids are given, no names
             id_mask = np.isin(category_ids, category_pd["id"].values)
             
             for cid, name, supercategory in zip(category_ids[~id_mask], category_ids[~id_mask].astype(str), supercategory_names[~id_mask]):
                 category = Category(id=cid, name=name, supercategory=supercategory)    
-                self.annotations.append(category)
+                self.categories.append(category)
         elif isinstance(category_names, np.ndarray):
             #i.e. if only category_names are given, no ids
             name_mask = np.isin(category_names, category_pd["name"].values)
@@ -89,10 +87,9 @@ class CocoDataset(BaseModel):
         
             for cid, name, supercategory in zip(new_category_ids, category_names[~name_mask], supercategory_names[~name_mask]):
                 category = Category(id=cid, name=name, supercategory=supercategory)    
-                self.annotations.append(category)
+                self.categories.append(category)
         else:
             raise AttributeError("At least one category attribute must be present")
-
 
     def bump_version(self, bump_method: str) -> None:
         bump_methods = ["patch", "minor", "major"]
@@ -113,18 +110,6 @@ class CocoDataset(BaseModel):
         output_dirs = np.unique([image.file_name.parent for image in self.images])
         if images_dir not in output_dirs:
             self.bump_version(bump_method="major")
-
-    @property
-    def next_image_id(self) -> int:
-        return self._next_image_id
-
-    @property
-    def next_annotation_id(self) -> int:
-        return self._next_annotation_id
-
-    @property
-    def next_source_id(self) -> int:
-        return self._next_source_id
 
 
 class Info(BaseModel):
@@ -170,3 +155,12 @@ class RleDict(TypedDict):
 class Source(BaseModel):
     id: int
     file_name: pathlib.Path
+
+
+# Call update_forward_refs() to resolve forward references (for pydantic <2.0.0)
+CocoDataset.update_forward_refs()
+Info.update_forward_refs()
+Image.update_forward_refs()
+Annotation.update_forward_refs()
+Category.update_forward_refs()
+Source.update_forward_refs()
