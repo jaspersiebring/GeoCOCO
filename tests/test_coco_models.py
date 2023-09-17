@@ -1,7 +1,10 @@
+from __future__ import annotations
+import pytest
 import os
 import numpy as np
 import pathlib
 from datetime import datetime
+import geopandas as gpd
 from geococo.coco_models import (
     CocoDataset,
     Info,
@@ -164,31 +167,249 @@ def test_dataset_versions():
     assert dataset.info.version == "1.0.0"
 
 
-def test_add_categories():
-    """Checks independent mapping of category_attribute to class_ids."""
-
+def test_add_categories_by_ids():
     dataset = CocoDataset(info=Info())
     assert dataset.categories == []
-    assert dataset._category_mapper == {}
-
+    
     # adding three unique classes
-    categories = np.array(["A", "B", "B", "E", "E"])
-    dataset.add_categories(categories=categories)
+    category_ids = np.array([1, 2, 2, 5, 5])
+    category_names = None
+    supercategory_names = None
+    
+    dataset.add_categories(
+        category_ids=category_ids,
+        category_names=category_names,
+        supercategory_names=supercategory_names
+        )
+    
+    assert len(dataset.categories) == np.unique(category_ids).size
+    assert np.array_equal(np.array([cat.id for cat in dataset.categories]), np.unique(category_ids))
+    assert np.array_equal(np.array([cat.name for cat in dataset.categories]), np.unique(category_ids).astype(str))
+    
 
-    # checking length and sequential category_ids
-    assert np.unique(categories).size == len(dataset._category_mapper)
-    assert np.unique(categories).size == len(dataset.categories)
-    assert np.all(np.diff(list(dataset._category_mapper.values())) == 1)
+def test_add_categories_by_names():
+    dataset = CocoDataset(info=Info())
+    assert dataset.categories == []
+    
+    # adding three unique classes
+    category_ids = None
+    category_names = np.array([1, 2, 2, 5, 5]).astype(str)
+    supercategory_names = None
+    
+    dataset.add_categories(
+        category_ids=category_ids,
+        category_names=category_names,
+        supercategory_names=supercategory_names
+        )
+    
+    assert len(dataset.categories) == np.unique(category_names).size
+    assert np.array_equal(np.array([cat.id for cat in dataset.categories]), np.arange(1, np.unique(category_names).size +1))
+    assert np.array_equal(np.array([cat.name for cat in dataset.categories]), np.unique(category_names))
+    
 
-    # check if existing key value pairs don't change
-    # done by adding a bunch of existing classes and one new one
-    initial_mapper = dataset._category_mapper.copy()
-    categories = np.array(["One", "Two", "Two", "Five", "Five", "Six", "Six"])
-    dataset.add_categories(categories=categories)
-    subset_mapper = {
-        key: value
-        for key, value in dataset._category_mapper.items()
-        if key in initial_mapper.keys()
-    }
-    assert initial_mapper == subset_mapper
-    assert np.all(np.diff(list(dataset._category_mapper.values())) == 1)
+def test_add_categories_by_names_and_ids():
+    dataset = CocoDataset(info=Info())
+    assert dataset.categories == []
+    
+    # adding three unique classes
+    category_ids = np.array([1, 2, 2, 5, 5])
+    category_names = np.array(["One", "Two", "Two", "Five", "Five"])  
+    supercategory_names = None
+    
+    dataset.add_categories(
+        category_ids=category_ids,
+        category_names=category_names,
+        supercategory_names=supercategory_names
+        )
+    
+    assert len(dataset.categories) == np.unique(category_names).size
+    assert len(dataset.categories) == np.unique(category_ids).size
+    assert np.all(np.isin(np.unique(category_ids), np.array([cat.id for cat in dataset.categories])))
+    assert np.all(np.isin(np.unique(category_names), np.array([cat.name for cat in dataset.categories])))
+    
+
+
+def test_add_categories_with_supers():
+    dataset = CocoDataset(info=Info())
+    assert dataset.categories == []
+    
+    # adding three unique classes
+    category_ids = np.array([1, 2, 2, 5, 5])
+    category_names = np.array(["One", "Two", "Two", "Five", "Five"])  
+    supercategory_names = np.array(["A", "A", "A", "B", "B"])  
+    
+    dataset.add_categories(
+        category_ids=category_ids,
+        category_names=category_names,
+        supercategory_names=supercategory_names
+        )
+    
+    assert len(dataset.categories) == np.unique(category_names).size
+    assert len(dataset.categories) == np.unique(category_ids).size
+    assert np.all(np.isin(np.unique(category_ids), [cat.id for cat in dataset.categories]))
+    assert np.all(np.isin(np.unique(category_names), [cat.name for cat in dataset.categories]))
+    assert np.all(np.isin(np.unique(supercategory_names), [cat.supercategory for cat in dataset.categories]))
+    
+
+def test_add_categories_by_names_and_ids_append_specific():
+    dataset = CocoDataset(info=Info())
+    assert dataset.categories == []
+    
+    # adding three unique classes
+    category_ids = np.array([1, 2, 2, 5, 5])
+    category_names = np.array(["One", "Two", "Two", "Five", "Five"])  
+    supercategory_names = None
+    
+    dataset.add_categories(
+        category_ids=category_ids,
+        category_names=category_names,
+        supercategory_names=supercategory_names
+        )
+    
+    assert len(dataset.categories) == np.unique(category_names).size
+    assert len(dataset.categories) == np.unique(category_ids).size
+
+    assert np.all(np.isin(np.unique(category_ids), np.array([cat.id for cat in dataset.categories])))
+    assert np.all(np.isin(np.unique(category_names), np.array([cat.name for cat in dataset.categories])))
+    
+    n_categories = len(dataset.categories)
+
+    # adding one new class and 4 duplicates
+    category_ids = np.array([1, 8, 2, 5, 5])
+    category_names = np.array(["One", "Eight", "Two", "Five", "Five"])  
+    supercategory_names = None
+
+    dataset.add_categories(
+        category_ids=category_ids,
+        category_names=category_names,
+        supercategory_names=supercategory_names
+        )
+
+    assert len(dataset.categories) == n_categories + 1
+    assert dataset.categories[-1].id == 8
+    assert dataset.categories[-1].name == "Eight"
+
+
+def test_add_categories_by_names_and_ids_append_auto():
+    dataset = CocoDataset(info=Info())
+    assert dataset.categories == []
+    
+    # adding three unique classes
+    category_ids = np.array([1, 2, 2, 5, 5])
+    category_names = np.array(["One", "Two", "Two", "Five", "Five"])  
+    supercategory_names = None
+    
+    dataset.add_categories(
+        category_ids=category_ids,
+        category_names=category_names,
+        supercategory_names=supercategory_names
+        )
+    
+    assert len(dataset.categories) == np.unique(category_names).size
+    assert len(dataset.categories) == np.unique(category_ids).size
+
+    assert np.all(np.isin(np.unique(category_ids), np.array([cat.id for cat in dataset.categories])))
+    assert np.all(np.isin(np.unique(category_names), np.array([cat.name for cat in dataset.categories])))
+    
+    n_categories = len(dataset.categories)
+
+    # adding one new class and 4 duplicates (only by name, not by id)
+    category_ids = None
+    category_names = np.array(["One", "Eight", "Two", "Five", "Five"])  
+    supercategory_names = None
+
+    dataset.add_categories(
+        category_ids=category_ids,
+        category_names=category_names,
+        supercategory_names=supercategory_names
+        )
+
+    assert len(dataset.categories) == n_categories + 1
+    assert dataset.categories[-1].id == 6
+    assert dataset.categories[-1].name == "Eight"
+
+
+def test_add_categories_by_names_and_ids_duplicates():
+    dataset = CocoDataset(info=Info())
+    assert dataset.categories == []
+    
+    # adding three unique classes
+    category_ids = np.array([1, 2, 2, 5, 5])
+    category_names = np.array(["One", "Two", "Two", "Five", "Five"])  
+    supercategory_names = None
+    
+    dataset.add_categories(
+        category_ids=category_ids,
+        category_names=category_names,
+        supercategory_names=supercategory_names
+        )
+    
+    assert len(dataset.categories) == np.unique(category_names).size
+    assert len(dataset.categories) == np.unique(category_ids).size
+
+    assert np.all(np.isin(np.unique(category_ids), np.array([cat.id for cat in dataset.categories])))
+    assert np.all(np.isin(np.unique(category_names), np.array([cat.name for cat in dataset.categories])))
+    
+    n_categories = len(dataset.categories)
+    cats = [cat for cat in dataset.categories]
+    
+    # adding duplicate ids and names
+    category_ids = np.array([1, 2, 2, 5, 5])
+    category_names = np.array(["One", "Two", "Two", "Five", "Five"])  
+    supercategory_names = None
+
+    dataset.add_categories(
+        category_ids=category_ids,
+        category_names=category_names,
+        supercategory_names=supercategory_names
+        )
+
+    assert len(dataset.categories) == n_categories
+    assert np.all([cat == dataset.categories[i] for i, cat in enumerate(cats)])
+
+
+
+
+def test_add_categories_faulty():
+    dataset = CocoDataset(info=Info())
+    assert dataset.categories == []
+    
+    # No ids or names
+    category_ids = None
+    category_names = None
+    supercategory_names = None
+    with pytest.raises(AttributeError):
+        dataset.add_categories(
+            category_ids=category_ids,
+            category_names=category_names,
+            supercategory_names=supercategory_names
+            )
+        
+    dataset = CocoDataset(info=Info())
+    assert dataset.categories == []
+    
+    # Ids of different len than names
+    category_ids = np.array([1, 2, 3])
+    category_names = np.array(["1", "2"])
+    with pytest.raises(AssertionError):
+        dataset.add_categories(
+            category_ids=category_ids,
+            category_names=category_names,
+            supercategory_names=supercategory_names
+            )
+    
+    dataset = CocoDataset(info=Info())
+    assert dataset.categories == []
+    
+    # Non-array input
+    category_ids = [1, 2, 3]
+    category_names = ["1", "2", "3"]
+    with pytest.raises(AttributeError):
+        dataset.add_categories(
+            category_ids=category_ids,
+            category_names=category_names,
+            supercategory_names=supercategory_names
+            )
+    
+
+
