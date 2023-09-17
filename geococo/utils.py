@@ -9,7 +9,6 @@ from rasterio.errors import WindowError
 from rasterio.mask import mask as riomask
 from shapely.geometry import MultiPolygon, Polygon, box
 from geococo.window_schema import WindowSchema
-from geococo.coco_models import CocoDataset
 from geopandas.array import GeometryDtype
 
 
@@ -269,7 +268,6 @@ def castable_category_id(categories: np.ndarray) -> bool:
         except ValueError:
             castable = False
         return castable
-    
 
 def validate_labels(labels: gpd.GeoDataFrame, category_id_col: Optional[str] = "category_id", category_name_col: Optional[str] = None, supercategory_col: Optional[str] = None) -> gpd.GeoDataFrame:
     """
@@ -299,8 +297,3 @@ def validate_labels(labels: gpd.GeoDataFrame, category_id_col: Optional[str] = "
         raise AttributeError("At least one category attribute must be present")
 
     return validated_labels
-
-def update_labels(labels: gpd.GeoDataFrame, category_id_col: Optional[str] = "category_id", category_name_col: Optional[str] = None, supercategory_col: Optional[str] = None, dataset: CocoDataset) -> gpd.GeoDataFrame:
-
-    # finish
-    return labels

@@ -3,6 +3,7 @@ import pathlib
 import rasterio
 import numpy as np
 from rasterio.windows import Window
+from shapely.geometry import Polygon
 from geococo.utils import (
     window_intersect,
     generate_window_offsets,
@@ -13,9 +14,11 @@ from geococo.utils import (
     estimate_schema,
     mask_label,
     mappable_category_id,
-    castable_category_id
+    castable_category_id,
+    validate_labels
 )
 from geococo.window_schema import WindowSchema
+from pandera.errors import SchemaError
 import geopandas as gpd
 from string import ascii_lowercase
 from typing import Tuple
@@ -324,5 +327,144 @@ def test_castable_category_id() -> None:
 
 
     
+def test_validate_labels(overlapping_labels: gpd.GeoDataFrame):
+    # dropping everything except geometry
+    labels = overlapping_labels[['geometry']]
+    category_ids = np.arange(1, labels.index.size+ 1)
+    category_names = np.random.choice(list(ascii_lowercase), labels.index.size)
+    supercategory_names = np.random.choice(list(ascii_lowercase), labels.index.size)
+    
+    category_id_col = "category_ids"
+    category_name_col = "category_names"
+    supercategory_col = "supercategory_names"
+
+    labels[category_id_col] = category_ids
+    labels[category_name_col] = category_names
+    labels[supercategory_col] = supercategory_names
+    
+    validated_labels = validate_labels(
+        labels=labels,
+        category_id_col=category_id_col,
+        category_name_col=category_name_col,
+        supercategory_col=supercategory_col
+        )    
+
+    assert validated_labels.shape == labels.shape
+    assert np.all(validated_labels == labels)
+
+def test_validate_labels_only_ids(overlapping_labels: gpd.GeoDataFrame):
+    # dropping everything except geometry
+    labels = overlapping_labels[['geometry']]
+    category_ids = np.arange(1, labels.index.size+ 1)
+    category_id_col = "category_ids"
+    labels[category_id_col] = category_ids
+    
+    validated_labels = validate_labels(
+        labels=labels,
+        category_id_col=category_id_col
+        )    
+
+    assert validated_labels.shape == labels.shape
+    assert np.all(validated_labels == labels)
+
+def test_validate_labels_id_casting(overlapping_labels: gpd.GeoDataFrame):
+    # dropping everything except geometry
+    labels = overlapping_labels[['geometry']]
+    category_ids = np.arange(1, labels.index.size+ 1).astype(float)
+    category_id_col = "category_ids"
+    labels[category_id_col] = category_ids
+    
+    validated_labels = validate_labels(
+        labels=labels,
+        category_id_col=category_id_col
+        )    
+
+    assert validated_labels.shape == labels.shape
+    assert np.all(validated_labels == labels)
+    assert labels[category_id_col].dtype == float
+    assert validated_labels[category_id_col].dtype == np.int64
+
+def test_validate_labels_only_names(overlapping_labels: gpd.GeoDataFrame):
+    # dropping everything except geometry
+    labels = overlapping_labels[['geometry']]    
+    category_names = np.random.choice(list(ascii_lowercase), labels.index.size)
+    category_name_col = "category_names"
+    labels[category_name_col] = category_names
+    validated_labels = validate_labels(
+        labels=labels,
+        category_name_col=category_name_col
+        )    
+
+    assert validated_labels.shape == labels.shape
+    assert np.all(validated_labels == labels)
+
+
+def test_validate_labels_invalid_geom(overlapping_labels: gpd.GeoDataFrame):
+    # dropping everything except geometry
+    labels = overlapping_labels[['geometry']]
+    invalid_polygon = Polygon([(0, 0), (2, 0), (1, 1), (1, -1), (0, 0)])
+    labels.loc[0, 'geometry'] = invalid_polygon
+    
+    category_ids = np.arange(1, labels.index.size+ 1)
+    category_names = np.random.choice(list(ascii_lowercase), labels.index.size)
+    supercategory_names = np.random.choice(list(ascii_lowercase), labels.index.size)
+    
+    category_id_col = "category_ids"
+    category_name_col = "category_names"
+    supercategory_col = "supercategory_names"
+
+    labels[category_id_col] = category_ids
+    labels[category_name_col] = category_names
+    labels[supercategory_col] = supercategory_names
+    
+    with pytest.raises(SchemaError):
+        validated_labels = validate_labels(
+            labels=labels,
+            category_id_col=category_id_col,
+            category_name_col=category_name_col,
+            supercategory_col=supercategory_col
+            )
+        
+
+def test_validate_labels_invalid_range(overlapping_labels: gpd.GeoDataFrame):
+    # dropping everything except geometry
+    labels = overlapping_labels[['geometry']]
+    
+    category_ids = np.arange(labels.index.size)
+    category_names = np.random.choice(list(ascii_lowercase), labels.index.size)
+    supercategory_names = np.random.choice(list(ascii_lowercase), labels.index.size)
+    
+    category_id_col = "category_ids"
+    category_name_col = "category_names"
+    supercategory_col = "supercategory_names"
+
+    labels[category_id_col] = category_ids
+    labels[category_name_col] = category_names
+    labels[supercategory_col] = supercategory_names
+    
+    with pytest.raises(SchemaError):
+        validated_labels = validate_labels(
+            labels=labels,
+            category_id_col=category_id_col,
+            category_name_col=category_name_col,
+            supercategory_col=supercategory_col
+            )
+        
+def test_validate_labels_invalid_type(overlapping_labels: gpd.GeoDataFrame):
+    # dropping everything except geometry
+    labels = overlapping_labels[['geometry']]
+    
+    category_ids = np.arange(1, labels.index.size+ 1)
+    category_names = category_ids
+    category_id_col = "category_ids"
+    category_name_col = "category_names"
+    labels[category_id_col] = category_ids
+    labels[category_name_col] = category_names
     
     
+    with pytest.raises(SchemaError):
+        validated_labels = validate_labels(
+            labels=labels,
+            category_id_col=category_id_col,
+            category_name_col=category_name_col,
+            )
