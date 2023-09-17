@@ -10,7 +10,7 @@ from rasterio.mask import mask as riomask
 from shapely.geometry import MultiPolygon, Polygon, box
 from geococo.window_schema import WindowSchema
 from geopandas.array import GeometryDtype
-
+from geococo.coco_models import CocoDataset
 
 def mask_label(
     input_raster: DatasetReader, label: Union[Polygon, MultiPolygon]
@@ -261,3 +261,12 @@ def validate_labels(labels: gpd.GeoDataFrame, category_id_col: Optional[str] = "
         raise AttributeError("At least one category attribute must be present")
 
     return validated_labels
+
+
+def update_labels(labels: gpd.GeoDataFrame, dataset: CocoDataset, category_id_col: Optional[str] = "category_id", category_name_col: Optional[str] = None, supercategory_col: Optional[str] = None) -> gpd.GeoDataFrame:
+
+    # finish
+    # also, since it's not expected that the user always gives ids and names, 
+    # we don't know under what name to find it when Annotation is added
+    # besides that, pretty close
+    return labels
