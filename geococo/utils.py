@@ -10,7 +10,7 @@ from rasterio.errors import WindowError
 from rasterio.mask import mask as riomask
 from shapely.geometry import MultiPolygon, Polygon, box
 from geococo.window_schema import WindowSchema
-from geopandas.array import GeometryDtype
+from geopandas.array import GeometryDtype # type: ignore
 from geococo.coco_models import Category
 
 
