@@ -2,6 +2,7 @@ from typing import Generator, List, Tuple, Union, Optional
 import geopandas as gpd
 import numpy as np
 import pandera as pa
+import pandas as pd
 from rasterio.io import DatasetReader
 from rasterio.transform import array_bounds
 from rasterio.windows import Window, from_bounds
@@ -10,7 +11,7 @@ from rasterio.mask import mask as riomask
 from shapely.geometry import MultiPolygon, Polygon, box
 from geococo.window_schema import WindowSchema
 from geopandas.array import GeometryDtype
-from geococo.coco_models import CocoDataset
+from geococo.coco_models import Category
 
 def mask_label(
     input_raster: DatasetReader, label: Union[Polygon, MultiPolygon]
@@ -263,10 +264,34 @@ def validate_labels(labels: gpd.GeoDataFrame, category_id_col: Optional[str] = "
     return validated_labels
 
 
-def update_labels(labels: gpd.GeoDataFrame, dataset: CocoDataset, category_id_col: Optional[str] = "category_id", category_name_col: Optional[str] = None, supercategory_col: Optional[str] = None) -> gpd.GeoDataFrame:
+def update_labels(labels: gpd.GeoDataFrame, categories: List[Category], category_id_col: Optional[str] = "category_id", category_name_col: Optional[str] = None) -> gpd.GeoDataFrame:
+    """
+    Updates labels with validated (super)category names and ids from given Category 
+    instances (i.e. source of truth created from current and previous labels). This 
+    ultimately just matches a given key (name or id) with keys in each Category 
+    instance and maps the associated (and validated) values to labels. 
 
-    # finish
-    # also, since it's not expected that the user always gives ids and names, 
-    # we don't know under what name to find it when Annotation is added
-    # besides that, pretty close
+    :param labels: GeoDataFrame containing labels and category attributes (validated by validate_labels)
+    :param categories: list of Category instances created from current and previous labels
+    :param category_id_col: Column name that holds category_id values
+    :param category_name_col: Column name that holds category_name values
+    :return: labels with name, id and supercategory attributes from all given Category instances
+    """
+
+    # Loading all given Category instances as a single dataframe
+    category_pd = pd.DataFrame([category.dict() for category in categories], columns=Category.schema()["properties"].keys())
+    
+    # Finding indices for matching values of a given attribute (name or id)
+    if category_id_col in labels.columns:
+        indices = np.where(labels[category_id_col].values.reshape(-1, 1) == category_pd.id.values)[1]
+    elif category_name_col in labels.columns:
+        indices = np.where(labels[category_name_col].values.reshape(-1, 1) == category_pd.name.values)[1]
+    else:        
+        raise AttributeError("At least one category attribute must be present")
+    
+    # Indexing and assigning values associated with COCO attributes (see Category def)
+    labels["id"] = category_pd.iloc[indices].id.values
+    labels["name"] = category_pd.iloc[indices].name.values
+    labels["supercategory"] = category_pd.iloc[indices].supercategory.values
+    
     return labels

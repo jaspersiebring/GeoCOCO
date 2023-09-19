@@ -13,8 +13,10 @@ from geococo.utils import (
     estimate_average_bounds,
     estimate_schema,
     mask_label,
-    validate_labels
+    validate_labels,
+    update_labels
 )
+from geococo.coco_models import Category
 from geococo.window_schema import WindowSchema
 from pandera.errors import SchemaError
 import geopandas as gpd
@@ -377,7 +379,7 @@ def test_validate_labels_invalid_geom(overlapping_labels: gpd.GeoDataFrame):
     labels[supercategory_col] = supercategory_names
     
     with pytest.raises(SchemaError):
-        validated_labels = validate_labels(
+        _ = validate_labels(
             labels=labels,
             category_id_col=category_id_col,
             category_name_col=category_name_col,
@@ -402,7 +404,7 @@ def test_validate_labels_invalid_range(overlapping_labels: gpd.GeoDataFrame):
     labels[supercategory_col] = supercategory_names
     
     with pytest.raises(SchemaError):
-        validated_labels = validate_labels(
+        _ = validate_labels(
             labels=labels,
             category_id_col=category_id_col,
             category_name_col=category_name_col,
@@ -422,8 +424,165 @@ def test_validate_labels_invalid_type(overlapping_labels: gpd.GeoDataFrame):
     
     
     with pytest.raises(SchemaError):
-        validated_labels = validate_labels(
+        _ = validate_labels(
             labels=labels,
             category_id_col=category_id_col,
             category_name_col=category_name_col,
             )
+        
+
+def test_update_labels(overlapping_labels):
+    # dropping everything except geometry
+    labels = overlapping_labels[['geometry']]
+
+    # can be any name, as long as they contain validated values (see validate_labels)
+    category_id_col = "ids"
+    category_name_col = "names"
+    
+    # categories are always made from existing or new labels
+    ids = np.arange(1, 10) #i.e. unique
+    names = ids.astype(str)
+    supers = np.full(names.shape, fill_value="1")
+    categories = []
+    for cid, name, super in zip(ids, names, supers):
+        category = Category(id=cid,name=name, supercategory=super)
+        categories.append(category)
+    
+    # populating labels
+    labels[category_id_col] = np.random.choice(ids, labels.index.size)
+    labels[category_name_col] = np.random.choice(names, labels.index.size)
+
+    # adding COCO keys
+    updated_labels = update_labels(
+        labels=labels,
+        categories=categories,
+        category_id_col=category_id_col,
+        category_name_col=category_name_col,
+        )
+
+    # checking if all coco keys are present
+    assert np.all(np.isin(["id", "name", "supercategory"], updated_labels.columns))
+    assert np.all(np.isin(updated_labels["id"].values, ids))
+    assert np.all(np.isin(updated_labels["name"].values, names))
+
+    # shape should not change, only values
+    assert labels.shape == updated_labels.shape
+
+
+
+def test_update_labels_ids(overlapping_labels):
+    # dropping everything except geometry
+    labels = overlapping_labels[['geometry']]
+
+    # can be any name, as long as they contain validated values (see validate_labels)
+    category_id_col = "ids"
+    category_name_col = None
+    
+    # categories are always made from existing or new labels
+    ids = np.arange(1, 10) #i.e. unique
+    names = ids.astype(str)
+    supers = np.full(names.shape, fill_value="1")
+    categories = []
+    for cid, name, super in zip(ids, names, supers):
+        category = Category(id=cid,name=name, supercategory=super)
+        categories.append(category)
+    
+    # populating labels
+    labels[category_id_col] = np.random.choice(ids, labels.index.size)
+
+    # adding COCO keys
+    updated_labels = update_labels(
+        labels=labels,
+        categories=categories,
+        category_id_col=category_id_col,
+        category_name_col=category_name_col,
+        )
+
+    # checking if all coco keys are present
+    assert np.all(np.isin(["id", "name", "supercategory"], updated_labels.columns))
+    assert np.all(np.isin(updated_labels["id"].values, ids))
+    assert np.all(np.isin(updated_labels["name"].values, names))
+
+    # shape should not change, only values
+    assert labels.shape == updated_labels.shape
+
+
+
+def test_update_labels_names(overlapping_labels):
+    # dropping everything except geometry
+    labels = overlapping_labels[['geometry']]
+
+    # can be any name, as long as they contain validated values (see validate_labels)
+    category_id_col = None
+    category_name_col = "names"
+    
+    # categories are always made from existing or new labels
+    ids = np.arange(1, 10) #i.e. unique
+    names = ids.astype(str)
+    supers = np.full(names.shape, fill_value="1")
+    categories = []
+    for cid, name, super in zip(ids, names, supers):
+        category = Category(id=cid,name=name, supercategory=super)
+        categories.append(category)
+    
+    # populating labels
+    labels[category_id_col] = np.random.choice(ids, labels.index.size)
+
+    # adding COCO keys
+    updated_labels = update_labels(
+        labels=labels,
+        categories=categories,
+        category_id_col=category_id_col,
+        category_name_col=category_name_col,
+        )
+
+    # checking if all coco keys are present
+    assert np.all(np.isin(["id", "name", "supercategory"], updated_labels.columns))
+    assert np.all(np.isin(updated_labels["id"].values, ids))
+    assert np.all(np.isin(updated_labels["name"].values, names))
+
+    # shape should not change, only values
+    assert labels.shape == updated_labels.shape
+
+
+
+def test_update_labels_faulty(overlapping_labels):
+    # only testing missing input and input length (input data is already guaranteed to
+    # be valid by other methods)
+
+     # dropping everything except geometry
+    labels = overlapping_labels[['geometry']]
+
+    # can be any name, as long as they contain validated values (see validate_labels)
+    category_id_col = "ids"
+    category_name_col = "names"
+    
+    # categories are always made from existing or new labels
+    ids = np.arange(1, 10) #i.e. unique
+    names = ids.astype(str)
+    supers = np.full(names.shape, fill_value="1")
+    categories = []
+    for cid, name, super in zip(ids, names, supers):
+        category = Category(id=cid,name=name, supercategory=super)
+        categories.append(category)
+    
+    # Missing atrributes
+    with pytest.raises(AttributeError):
+        _ = update_labels(
+            labels=labels,
+            categories=categories,
+            category_id_col=None,
+            category_name_col=None,
+            )
+        
+    # Empty arrays
+    labels[category_id_col] = np.empty(shape=labels.index.size)
+    labels[category_name_col] = np.empty(shape=labels.index.size)
+
+    with pytest.raises(ValueError):
+        _ = update_labels(
+                labels=labels,
+                categories=categories,
+                category_id_col=category_id_col,
+                category_name_col=category_name_col,
+                )
