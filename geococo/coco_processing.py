@@ -5,6 +5,8 @@ from typing import List, Tuple
 import geopandas as gpd
 import numpy as np
 import rasterio
+from pandas import Series
+from typing import Optional
 from rasterio.io import DatasetReader
 from rasterio.mask import mask as riomask
 from shapely.geometry import MultiPolygon
@@ -18,6 +20,8 @@ from geococo.utils import (
     reshape_image,
     window_intersect,
     mask_label,
+    validate_labels,
+    update_labels
 )
 
 
@@ -25,9 +29,11 @@ def labels_to_dataset(
     dataset: CocoDataset,
     images_dir: pathlib.Path,
     src: DatasetReader,
-    labels: gpd.GeoDataFrame,
     window_bounds: List[Tuple[int, int]],
-    category_attribute: str = "category_id",
+    labels: gpd.GeoDataFrame,
+    category_id_col: Optional[str] = "category_id",
+    category_name_col: Optional[str] = None,
+    supercategory_col: Optional[str] = None
 ) -> CocoDataset:
     """Move across a given geotiff, converting all intersecting labels to COCO
     annotations and appending them to a COCODataset model. This is done through
@@ -46,10 +52,43 @@ def labels_to_dataset(
     :param src: open rasterio reader for input raster
     :param labels: GeoDataFrame containing labels and class_info ('category_id')
     :param window_bounds: a list of window_bounds to attempt to use ()
-    :param category_attribute: Column containing category_id values
+    :param category_id_col: Column containing category_id values
+    :param category_name_col: Column containing category_name values
+    :param supercategory_col: Column containing supercategory values
     :return: The COCO dataset with appended Images and Annotations
     """
 
+    # checks presence, types and values of all required attributes
+    labels = validate_labels(
+        labels=labels,
+        category_id_col=category_id_col,
+        category_name_col=category_name_col,
+        supercategory_col=supercategory_col
+        )
+    
+    # dumping series to array (if present)
+    category_ids = labels.get(category_id_col)
+    category_ids = category_ids.values if isinstance(category_ids, Series) else None
+    category_names = labels.get(category_name_col)
+    category_names = category_names.values if isinstance(category_names, Series) else None
+    supercategory_names = labels.get(supercategory_col)
+    supercategory_names = supercategory_names.values if isinstance(supercategory_names, Series) else None
+
+    # adding new Category instances (if any)
+    dataset.add_categories(
+        category_ids=category_ids,
+        category_names=category_names,
+        supercategory_names=supercategory_names
+        )
+    
+    # updating labels with validated COCO keys (i.e. 'name', 'id', 'supercategory')
+    labels = update_labels(
+        labels=labels,
+        categories=dataset.categories,
+        category_id_col=category_id_col,
+        category_name_col=category_name_col
+        )
+        
     # Setting nodata and estimating window configuration
     parent_window = window_intersect(input_raster=src, input_vector=labels)
     nodata_value = src.nodata if src.nodata else 0
@@ -58,14 +97,11 @@ def labels_to_dataset(
     schema = estimate_schema(gdf=labels, src=src, window_bounds=window_bounds)
     n_windows = generate_window_offsets(window=parent_window, schema=schema).shape[0]
 
-    # sets dataset.next_source_id and possibly bumps minor version
+    # sets dataset.next_source_id and bump either minor or patch version
     dataset.add_source(source_path=pathlib.Path(src.name))
 
     # bumps major version if images_dir has been used in this dataset before
     dataset.verify_new_output_dir(images_dir=images_dir)
-
-    # sets dataset._category_mapper
-    dataset.add_categories(categories=labels[category_attribute].unique())
 
     for child_window in tqdm(
         window_factory(parent_window=parent_window, schema=schema), total=n_windows
@@ -129,9 +165,7 @@ def labels_to_dataset(
 
         # Iteratively add Annotation models to dataset (also bumps next_annotation_id)
         with rasterio.open(window_image_path) as windowed_src:
-            for _, window_label in window_labels.sort_values(
-                category_attribute
-            ).iterrows():
+            for _, window_label in window_labels.sort_values("id").iterrows():
                 label_mask = mask_label(
                     input_raster=windowed_src, label=window_label.geometry
                 )
@@ -142,13 +176,11 @@ def labels_to_dataset(
                 bounding_box = cv2.boundingRect(label_mask.astype(np.uint8))
                 area = np.sum(label_mask)
                 iscrowd = 1 if isinstance(window_label.geometry, MultiPolygon) else 0
-                category_name = str(window_label[category_attribute])
-                category_id = dataset._category_mapper[category_name]
 
                 annotation_instance = Annotation(
                     id=dataset.next_annotation_id,
                     image_id=dataset.next_image_id,
-                    category_id=category_id,
+                    category_id=window_label["id"],
                     segmentation=rle,  # type: ignore
                     area=area,
                     bbox=bounding_box,
