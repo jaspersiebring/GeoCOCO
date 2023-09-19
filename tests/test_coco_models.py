@@ -19,7 +19,7 @@ from geococo.coco_models import (
 def test_dataset():
     info = Info(
         year=3030,
-        version="1.0",
+        version="1.0.0",
         description="Test",
         contributor="Test user",
         date_created=datetime.now(),
@@ -412,4 +412,17 @@ def test_add_categories_faulty():
             )
     
 
+    dataset = CocoDataset(info=Info())
+    assert dataset.categories == []
+    
+    # Nullable arrays (would also get caught by validate_labels
+    category_ids = np.array([1, 2, 3, None, 5])
+    
+    with pytest.raises(TypeError):
+        dataset.add_categories(
+            category_ids=category_ids,
+            category_names=None,
+            supercategory_names=None
+            )
+    
 
