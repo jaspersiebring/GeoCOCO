@@ -5,7 +5,7 @@ import pandas as pd
 from datetime import datetime
 from typing import List, Optional, Dict, Any
 from typing_extensions import TypedDict
-from pydantic import BaseModel, ConfigDict, root_validator
+from pydantic import BaseModel, root_validator
 from pydantic.fields import Field
 from semver.version import Version
 
@@ -148,7 +148,6 @@ class Info(BaseModel):
 
 
 class Image(BaseModel):
-    model_config = ConfigDict(frozen=True)
     id: int
     width: int
     height: int
@@ -157,7 +156,6 @@ class Image(BaseModel):
 
 
 class Annotation(BaseModel):
-    model_config = ConfigDict(frozen=True)
     id: int
     image_id: int
     category_id: int
@@ -168,7 +166,6 @@ class Annotation(BaseModel):
 
 
 class Category(BaseModel):
-    model_config = ConfigDict(frozen=True)
     id: int
     name: str
     supercategory: str
