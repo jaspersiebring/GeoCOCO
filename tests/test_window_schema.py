@@ -29,7 +29,7 @@ def test_schema_invalid(test_input):
             width_window=width_window,
             height_window=height_window,
             width_overlap=width_overlap,
-            height_overlap=height_overlap
+            height_overlap=height_overlap,
         )
 
 

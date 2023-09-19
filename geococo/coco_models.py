@@ -19,14 +19,14 @@ class CocoDataset(BaseModel):
     next_image_id: int = Field(default=1, exclude=True)
     next_annotation_id: int = Field(default=1, exclude=True)
     next_source_id: int = Field(default=1, exclude=True)
-    
+
     @root_validator
     def _set_ids(cls: CocoDataset, values: Dict[str, Any]) -> Dict[str, Any]:
         values["next_image_id"] = len(values["images"]) + 1
         values["next_annotation_id"] = len(values["annotations"]) + 1
         values["next_source_id"] = len(values["sources"])
         return values
-        
+
     def add_annotation(self, annotation: Annotation) -> None:
         self.annotations.append(annotation)
         self.next_annotation_id += 1
@@ -47,25 +47,32 @@ class CocoDataset(BaseModel):
             self.bump_version(bump_method="minor")
 
         self.next_source_id = source.id
-    
-    
-    def add_categories(self, category_ids: Optional[np.ndarray], category_names: Optional[np.ndarray], supercategory_names: Optional[np.ndarray]) -> None:
+
+    def add_categories(
+        self,
+        category_ids: Optional[np.ndarray],
+        category_names: Optional[np.ndarray],
+        supercategory_names: Optional[np.ndarray],
+    ) -> None:
         # initializing values
         super_default = "1"
         names_present = ids_present = False
-        
+
         # Loading all existing Category instances as a single dataframe
-        category_pd = pd.DataFrame([category.dict() for category in self.categories], columns=Category.schema()["properties"].keys())
-        
-        # checking if category_names can be assigned to uid_array (used to check duplicates)
+        category_pd = pd.DataFrame(
+            [category.dict() for category in self.categories],
+            columns=Category.schema()["properties"].keys(),
+        )
+
+        # checking if names can be assigned to uid_array (used to check duplicates)
         if isinstance(category_names, np.ndarray):
             uid_array = category_names
             uid_attribute = "name"
             names_present = True
 
-        # checking if category_ids can be assigned to uid_array (used to check duplicates)
+        # checking if ids can be assigned to uid_array (used to check duplicates)
         if isinstance(category_ids, np.ndarray):
-            uid_array = category_ids # overrides existing array because ids are leading
+            uid_array = category_ids  # overrides existing array because ids are leading
             uid_attribute = "id"
             ids_present = True
         if not names_present and not ids_present:
@@ -80,7 +87,7 @@ class CocoDataset(BaseModel):
         new_shape = new_members.shape
         if new_shape[0] == 0:
             return
-            
+
         # creating default supercategory_names if not given
         if not isinstance(supercategory_names, np.ndarray):
             supercategory_names = np.full(shape=new_shape, fill_value=super_default)
@@ -100,7 +107,7 @@ class CocoDataset(BaseModel):
             end = start + new_members.size
             category_ids = np.arange(start, end)
             category_names = new_members
-        # ensuring equal size for category names and ids (if given) 
+        # ensuring equal size for category names and ids (if given)
         else:
             assert category_names.shape == original_shape
             category_names = category_names[indices][~member_mask]
@@ -108,7 +115,7 @@ class CocoDataset(BaseModel):
 
         # iteratively instancing and appending Category from set ids, names and supers
         for cid, name, super in zip(category_ids, category_names, supercategory_names):
-            category = Category(id=cid, name=name, supercategory=super) 
+            category = Category(id=cid, name=name, supercategory=super)
             self.categories.append(category)
 
     def bump_version(self, bump_method: str) -> None:

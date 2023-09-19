@@ -21,7 +21,7 @@ from geococo.utils import (
     window_intersect,
     mask_label,
     validate_labels,
-    update_labels
+    update_labels,
 )
 
 
@@ -33,7 +33,7 @@ def labels_to_dataset(
     labels: gpd.GeoDataFrame,
     category_id_col: Optional[str] = "category_id",
     category_name_col: Optional[str] = None,
-    supercategory_col: Optional[str] = None
+    supercategory_col: Optional[str] = None,
 ) -> CocoDataset:
     """Move across a given geotiff, converting all intersecting labels to COCO
     annotations and appending them to a COCODataset model. This is done through
@@ -63,32 +63,36 @@ def labels_to_dataset(
         labels=labels,
         category_id_col=category_id_col,
         category_name_col=category_name_col,
-        supercategory_col=supercategory_col
-        )
-    
+        supercategory_col=supercategory_col,
+    )
+
     # dumping series to array (if present)
     category_ids = labels.get(category_id_col)
     category_ids = category_ids.values if isinstance(category_ids, Series) else None
     category_names = labels.get(category_name_col)
-    category_names = category_names.values if isinstance(category_names, Series) else None
+    category_names = (
+        category_names.values if isinstance(category_names, Series) else None
+    )
     supercategory_names = labels.get(supercategory_col)
-    supercategory_names = supercategory_names.values if isinstance(supercategory_names, Series) else None
+    supercategory_names = (
+        supercategory_names.values if isinstance(supercategory_names, Series) else None
+    )
 
     # adding new Category instances (if any)
     dataset.add_categories(
         category_ids=category_ids,
         category_names=category_names,
-        supercategory_names=supercategory_names
-        )
-    
+        supercategory_names=supercategory_names,
+    )
+
     # updating labels with validated COCO keys (i.e. 'name', 'id', 'supercategory')
     labels = update_labels(
         labels=labels,
         categories=dataset.categories,
         category_id_col=category_id_col,
-        category_name_col=category_name_col
-        )
-        
+        category_name_col=category_name_col,
+    )
+
     # Setting nodata and estimating window configuration
     parent_window = window_intersect(input_raster=src, input_vector=labels)
     nodata_value = src.nodata if src.nodata else 0

@@ -25,11 +25,11 @@ def test_labels_to_dataset_new_dataset(
             src=raster_source,
             labels=overlapping_labels,
             window_bounds=[(256, 256)],
-            category_name_col=category_attribute
+            category_name_col=category_attribute,
         )
 
         # Checking if output has correct classes
-        dataset_class_names =  np.array([cat.name for cat in dataset.categories])
+        dataset_class_names = np.array([cat.name for cat in dataset.categories])
         labels_class_names = overlapping_labels[category_attribute].unique().astype(str)
         assert np.all(np.isin(dataset_class_names, labels_class_names))
 
@@ -63,7 +63,7 @@ def test_labels_to_dataset_append_dataset(
             src=raster_source,
             labels=overlapping_labels,
             window_bounds=[(256, 256)],
-            category_id_col=category_attribute
+            category_id_col=category_attribute,
         )
 
         # Checking if output has correct classes
@@ -108,7 +108,6 @@ def test_labels_to_dataset_append_with_new_categories(
     test_raster: pathlib.Path,
     overlapping_labels: gpd.GeoDataFrame,
 ) -> None:
-    
     id_attribute = "category_id"
     name_attribute = "class_names"
 
@@ -123,7 +122,7 @@ def test_labels_to_dataset_append_with_new_categories(
             labels=overlapping_labels,
             window_bounds=[(256, 256)],
             category_id_col=id_attribute,
-            category_name_col=name_attribute
+            category_name_col=name_attribute,
         )
 
         # Checking if output has correct classes
@@ -142,7 +141,7 @@ def test_labels_to_dataset_append_with_new_categories(
         # Changing one entry
         overlapping_labels.loc[2, "category_id"] = 6
         overlapping_labels.loc[2, "class_names"] = "Six"
-        
+
         dataset = labels_to_dataset(
             dataset=dataset,
             images_dir=tmp_path,
@@ -150,7 +149,7 @@ def test_labels_to_dataset_append_with_new_categories(
             labels=overlapping_labels,
             window_bounds=[(256, 256)],
             category_id_col=id_attribute,
-            category_name_col=name_attribute
+            category_name_col=name_attribute,
         )
 
         # Checking whether new data was added without touching existing data
@@ -159,7 +158,7 @@ def test_labels_to_dataset_append_with_new_categories(
 
         # Checking creation of Category with continued index
         assert dataset.categories[-1].name == "Six"
-        assert dataset.categories[-1].id ==  previous_dataset.categories[-1].id + 1
+        assert dataset.categories[-1].id == previous_dataset.categories[-1].id + 1
         assert len(dataset.categories) == len(previous_dataset.categories) + 1
 
         assert dataset.next_image_id != previous_image_id

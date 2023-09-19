@@ -5,13 +5,12 @@ from geococo.coco_models import CocoDataset, Info
 
 
 def load_dataset(json_path: pathlib.Path) -> CocoDataset:
-    """Dumps the contents of json_path as a string, interprets it as a
-    CocoDataset model and returns it.
+    """Dumps the contents of json_path as a string, interprets it as a CocoDataset model
+    and returns it.
 
-    :param json_path: path to the JSON file containing the json-encoded
-        COCO dataset
-    :return: An instance of CocoDataset with loaded Image- and
-        Annotation objects from json_path
+    :param json_path: path to the JSON file containing the json-encoded COCO dataset
+    :return: An instance of CocoDataset with loaded Image- and Annotation objects from
+        json_path
     """
 
     with open(json_path, mode="r", encoding="utf-8") as json_fp:
@@ -26,17 +25,15 @@ def create_dataset(
     version: str = str(Version(major=0)),
     date_created: datetime = datetime.now(),
 ) -> CocoDataset:
-    """
-    Instances and returns a new CocoDataset model with given kwargs.
+    """Instances and returns a new CocoDataset model with given kwargs.
 
     :param description: Description of your COCO dataset
-    :param contributor: Main contributors of your COCO dataset, its
-        images and its annotations
+    :param contributor: Main contributors of your COCO dataset, its images and its
+        annotations
     :param version: Initial SemVer version (defaults to 0.0.0)
-    :param date_created: Date when dataset was initially created,
-        defaults to datetime.now()
-    :return: An instance of CocoDataset without Image- and Annotation
-        objects
+    :param date_created: Date when dataset was initially created, defaults to
+        datetime.now()
+    :return: An instance of CocoDataset without Image- and Annotation objects
     """
 
     info = Info(
@@ -54,8 +51,7 @@ def save_dataset(dataset: CocoDataset, json_path: pathlib.Path) -> None:
     """JSON-encodes an instance of CocoDataset and saves it to json_path.
 
     :param dataset: An instance of CocoDataset
-    :param json_path: where to save the JSON-encoded CocoDataset
-        instance to
+    :param json_path: where to save the JSON-encoded CocoDataset instance to
     """
 
     json_data = dataset.json()
