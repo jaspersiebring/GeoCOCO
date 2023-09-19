@@ -16,7 +16,7 @@ def load_dataset(json_path: pathlib.Path) -> CocoDataset:
 
     with open(json_path, mode="r", encoding="utf-8") as json_fp:
         json_data = json_fp.read()
-    dataset = CocoDataset.model_validate_json(json_data)
+    dataset = CocoDataset.parse_raw(json_data)
     return dataset
 
 
@@ -58,6 +58,6 @@ def save_dataset(dataset: CocoDataset, json_path: pathlib.Path) -> None:
         instance to
     """
 
-    json_data = dataset.model_dump_json()
+    json_data = dataset.json()
     with open(json_path, mode="w", encoding="utf-8") as dst:
         dst.write(json_data)
