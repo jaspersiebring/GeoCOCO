@@ -25,9 +25,10 @@ def test_load_dataset_full(
             src=raster_source,
             labels=overlapping_labels,
             window_bounds=[(256, 256)],
+            category_id_col="category_id",
         )
 
-    json_data = dataset.model_dump_json()
+    json_data = dataset.json()
     with open(json_path, "w") as dst:
         dst.write(json_data)
 
@@ -40,7 +41,7 @@ def test_load_dataset_empty(tmp_path: pathlib.Path) -> None:
     info = Info(version="0.0.1", date_created=datetime.now())
     dataset = CocoDataset(info=info)
 
-    json_data = dataset.model_dump_json()
+    json_data = dataset.json()
     with open(json_path, "w") as dst:
         dst.write(json_data)
 

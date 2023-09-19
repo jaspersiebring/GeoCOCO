@@ -16,7 +16,7 @@ warnings.filterwarnings(
 warnings.filterwarnings(
     "error",
     "The given matrix is equal to Affine.identity or its flipped counterpart. GDAL may"
-     " ignore this matrix and save no geotransform without raising an error. This "
-     "behavior is somewhat driver-specific.",
+    " ignore this matrix and save no geotransform without raising an error. This "
+    "behavior is somewhat driver-specific.",
     category=NotGeoreferencedWarning,
 )

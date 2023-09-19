@@ -1,46 +1,39 @@
 from __future__ import annotations
 import numpy as np
 import pathlib
+import pandas as pd
 from datetime import datetime
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Any
 from typing_extensions import TypedDict
-
-from pydantic import BaseModel, ConfigDict, InstanceOf, model_validator
+from pydantic import BaseModel, root_validator
+from pydantic.fields import Field
 from semver.version import Version
-from geococo.utils import assert_valid_categories
 
 
 class CocoDataset(BaseModel):
     info: Info
-    images: List[InstanceOf[Image]] = []
-    annotations: List[InstanceOf[Annotation]] = []
-    categories: List[InstanceOf[Category]] = []
-    sources: List[InstanceOf[Source]] = []
-    _next_image_id: int = 1
-    _next_annotation_id: int = 1
-    _next_source_id: int = 1
-    _category_mapper: Dict = {}
+    images: List[Image] = []
+    annotations: List[Annotation] = []
+    categories: List[Category] = []
+    sources: List[Source] = []
+    next_image_id: int = Field(default=1, exclude=True)
+    next_annotation_id: int = Field(default=1, exclude=True)
+    next_source_id: int = Field(default=1, exclude=True)
 
-    @model_validator(mode="after")
-    def _set_ids(self) -> CocoDataset:
-        self._next_image_id = len(self.images) + 1
-        self._next_annotation_id = len(self.annotations) + 1
-        self._next_source_id = len(self.sources)
-        self._category_mapper = self._get_category_mapper()
-        return self
-
-    def _get_category_mapper(self) -> Dict:
-        category_data = [(category.name, category.id) for category in self.categories]
-        category_mapper = dict(category_data) if category_data else {}
-        return category_mapper
+    @root_validator
+    def _set_ids(cls: CocoDataset, values: Dict[str, Any]) -> Dict[str, Any]:
+        values["next_image_id"] = len(values["images"]) + 1
+        values["next_annotation_id"] = len(values["annotations"]) + 1
+        values["next_source_id"] = len(values["sources"])
+        return values
 
     def add_annotation(self, annotation: Annotation) -> None:
         self.annotations.append(annotation)
-        self._next_annotation_id += 1
+        self.next_annotation_id += 1
 
     def add_image(self, image: Image) -> None:
         self.images.append(image)
-        self._next_image_id += 1
+        self.next_image_id += 1
 
     def add_source(self, source_path: pathlib.Path) -> None:
         sources = [ssrc for ssrc in self.sources if ssrc.file_name == source_path]
@@ -53,30 +46,77 @@ class CocoDataset(BaseModel):
             self.sources.append(source)
             self.bump_version(bump_method="minor")
 
-        self._next_source_id = source.id
+        self.next_source_id = source.id
 
-    def add_categories(self, categories: np.ndarray) -> None:
-        # checking if categories are castable to str and under a certain size
-        categories = assert_valid_categories(categories=np.unique(categories))
+    def add_categories(
+        self,
+        category_ids: Optional[np.ndarray],
+        category_names: Optional[np.ndarray],
+        supercategory_names: Optional[np.ndarray],
+    ) -> None:
+        # initializing values
+        super_default = "1"
+        names_present = ids_present = False
 
-        # filtering existing categories
-        category_mask = np.isin(categories, list(self._category_mapper.keys()))
-        new_categories = categories[~category_mask]
+        # Loading all existing Category instances as a single dataframe
+        category_pd = pd.DataFrame(
+            [category.dict() for category in self.categories],
+            columns=Category.schema()["properties"].keys(),
+        )
 
-        # generating mapper from new categories
-        start = len(self._category_mapper.values()) + 1
-        end = start + new_categories.size
-        category_dict = dict(zip(new_categories, np.arange(start, end)))
+        # checking if names can be assigned to uid_array (used to check duplicates)
+        if isinstance(category_names, np.ndarray):
+            uid_array = category_names
+            uid_attribute = "name"
+            names_present = True
 
-        # instance and append new Category objects to dataset
-        for category_name, category_id in category_dict.items():
-            category = Category(
-                id=category_id, name=str(category_name), supercategory="1"
-            )
+        # checking if ids can be assigned to uid_array (used to check duplicates)
+        if isinstance(category_ids, np.ndarray):
+            uid_array = category_ids  # overrides existing array because ids are leading
+            uid_attribute = "id"
+            ids_present = True
+        if not names_present and not ids_present:
+            raise AttributeError("At least one category attribute must be present")
+
+        # masking out duplicate values and exiting if all duplicates
+        original_shape = uid_array.shape
+        _, indices = np.unique(uid_array, return_index=True)
+        uid_array = uid_array[indices]
+        member_mask = np.isin(uid_array, category_pd[uid_attribute])
+        new_members = uid_array[~member_mask]
+        new_shape = new_members.shape
+        if new_shape[0] == 0:
+            return
+
+        # creating default supercategory_names if not given
+        if not isinstance(supercategory_names, np.ndarray):
+            supercategory_names = np.full(shape=new_shape, fill_value=super_default)
+        else:
+            assert supercategory_names.shape == original_shape
+            supercategory_names = supercategory_names[indices][~member_mask]
+
+        # creating default category_names if not given (str version of ids)
+        if ids_present and not names_present:
+            category_names = new_members.astype(str)
+            category_ids = new_members
+        # creating ids if not given (incremental sequence starting from last known id)
+        elif names_present and not ids_present:
+            pandas_mask = category_pd[uid_attribute].isin(uid_array[member_mask])
+            max_id = category_pd.loc[pandas_mask, "id"].max()
+            start = np.nansum([max_id, 1])
+            end = start + new_members.size
+            category_ids = np.arange(start, end)
+            category_names = new_members
+        # ensuring equal size for category names and ids (if given)
+        else:
+            assert category_names.shape == original_shape # type: ignore
+            category_names = category_names[indices][~member_mask] # type: ignore
+            category_ids = new_members
+
+        # iteratively instancing and appending Category from set ids, names and supers
+        for cid, name, super in zip(category_ids, category_names, supercategory_names):
+            category = Category(id=cid, name=name, supercategory=super)
             self.categories.append(category)
-
-        # update existing category_mapper with new categories
-        self._category_mapper.update(category_dict)
 
     def bump_version(self, bump_method: str) -> None:
         bump_methods = ["patch", "minor", "major"]
@@ -98,18 +138,6 @@ class CocoDataset(BaseModel):
         if images_dir not in output_dirs:
             self.bump_version(bump_method="major")
 
-    @property
-    def next_image_id(self) -> int:
-        return self._next_image_id
-
-    @property
-    def next_annotation_id(self) -> int:
-        return self._next_annotation_id
-
-    @property
-    def next_source_id(self) -> int:
-        return self._next_source_id
-
 
 class Info(BaseModel):
     version: str = str(Version(major=0))
@@ -120,7 +148,6 @@ class Info(BaseModel):
 
 
 class Image(BaseModel):
-    model_config = ConfigDict(frozen=True)
     id: int
     width: int
     height: int
@@ -129,7 +156,6 @@ class Image(BaseModel):
 
 
 class Annotation(BaseModel):
-    model_config = ConfigDict(frozen=True)
     id: int
     image_id: int
     category_id: int
@@ -140,7 +166,6 @@ class Annotation(BaseModel):
 
 
 class Category(BaseModel):
-    model_config = ConfigDict(frozen=True)
     id: int
     name: str
     supercategory: str
@@ -154,3 +179,12 @@ class RleDict(TypedDict):
 class Source(BaseModel):
     id: int
     file_name: pathlib.Path
+
+
+# Call update_forward_refs() to resolve forward references (for pydantic <2.0.0)
+CocoDataset.update_forward_refs()
+Info.update_forward_refs()
+Image.update_forward_refs()
+Annotation.update_forward_refs()
+Category.update_forward_refs()
+Source.update_forward_refs()

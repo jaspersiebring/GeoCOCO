@@ -3,6 +3,7 @@ import pathlib
 import rasterio
 import numpy as np
 from rasterio.windows import Window
+from shapely.geometry import Polygon
 from geococo.utils import (
     window_intersect,
     generate_window_offsets,
@@ -12,9 +13,12 @@ from geococo.utils import (
     estimate_average_bounds,
     estimate_schema,
     mask_label,
-    assert_valid_categories,
+    validate_labels,
+    update_labels,
 )
+from geococo.coco_models import Category
 from geococo.window_schema import WindowSchema
+from pandera.errors import SchemaError
 import geopandas as gpd
 from string import ascii_lowercase
 from typing import Tuple
@@ -284,31 +288,294 @@ def test_window_factory_boundless() -> None:
     assert np.any(window_extents[:, 1] >= window.height)
 
 
-def test_assert_valid_categories() -> None:
-    # almost all python objects can be represented by str
-    # so we just try casting and verify char length
-    category_lengths = [10, 49, 50]
-    random_words = np.array(
-        [
-            "".join(np.random.choice(list(ascii_lowercase), cl))
-            for cl in category_lengths
-        ]
+def test_validate_labels(overlapping_labels: gpd.GeoDataFrame):
+    # dropping everything except geometry
+    labels = overlapping_labels[["geometry"]]
+    category_ids = np.arange(1, labels.index.size + 1)
+    category_names = np.random.choice(list(ascii_lowercase), labels.index.size)
+    supercategory_names = np.random.choice(list(ascii_lowercase), labels.index.size)
+
+    category_id_col = "category_ids"
+    category_name_col = "category_names"
+    supercategory_col = "supercategory_names"
+
+    labels[category_id_col] = category_ids
+    labels[category_name_col] = category_names
+    labels[supercategory_col] = supercategory_names
+
+    validated_labels = validate_labels(
+        labels=labels,
+        category_id_col=category_id_col,
+        category_name_col=category_name_col,
+        supercategory_col=supercategory_col,
     )
 
-    _ = assert_valid_categories(random_words)
+    assert validated_labels.shape == labels.shape
+    assert np.all(validated_labels == labels)
 
-    # float64
-    random_numbers = np.random.randn(3).astype(np.float64)
-    _ = assert_valid_categories(random_numbers)
 
-    # longer than <U50
-    category_lengths = [51, 70, 120]
-    random_words = np.array(
-        [
-            "".join(np.random.choice(list(ascii_lowercase), cl))
-            for cl in category_lengths
-        ]
+def test_validate_labels_only_ids(overlapping_labels: gpd.GeoDataFrame):
+    # dropping everything except geometry
+    labels = overlapping_labels[["geometry"]]
+    category_ids = np.arange(1, labels.index.size + 1)
+    category_id_col = "category_ids"
+    labels[category_id_col] = category_ids
+
+    validated_labels = validate_labels(labels=labels, category_id_col=category_id_col)
+
+    assert validated_labels.shape == labels.shape
+    assert np.all(validated_labels == labels)
+
+
+def test_validate_labels_id_casting(overlapping_labels: gpd.GeoDataFrame):
+    # dropping everything except geometry
+    labels = overlapping_labels[["geometry"]]
+    category_ids = np.arange(1, labels.index.size + 1).astype(float)
+    category_id_col = "category_ids"
+    labels[category_id_col] = category_ids
+
+    validated_labels = validate_labels(labels=labels, category_id_col=category_id_col)
+
+    assert validated_labels.shape == labels.shape
+    assert np.all(validated_labels == labels)
+    assert labels[category_id_col].dtype == float
+    assert validated_labels[category_id_col].dtype == np.int64
+
+
+def test_validate_labels_only_names(overlapping_labels: gpd.GeoDataFrame):
+    # dropping everything except geometry
+    labels = overlapping_labels[["geometry"]]
+    category_names = np.random.choice(list(ascii_lowercase), labels.index.size)
+    category_name_col = "category_names"
+    labels[category_name_col] = category_names
+    validated_labels = validate_labels(
+        labels=labels, category_name_col=category_name_col
     )
+
+    assert validated_labels.shape == labels.shape
+    assert np.all(validated_labels == labels)
+
+
+def test_validate_labels_invalid_geom(overlapping_labels: gpd.GeoDataFrame):
+    # dropping everything except geometry
+    labels = overlapping_labels[["geometry"]]
+    invalid_polygon = Polygon([(0, 0), (2, 0), (1, 1), (1, -1), (0, 0)])
+    labels.loc[0, "geometry"] = invalid_polygon
+
+    category_ids = np.arange(1, labels.index.size + 1)
+    category_names = np.random.choice(list(ascii_lowercase), labels.index.size)
+    supercategory_names = np.random.choice(list(ascii_lowercase), labels.index.size)
+
+    category_id_col = "category_ids"
+    category_name_col = "category_names"
+    supercategory_col = "supercategory_names"
+
+    labels[category_id_col] = category_ids
+    labels[category_name_col] = category_names
+    labels[supercategory_col] = supercategory_names
+
+    with pytest.raises(SchemaError):
+        _ = validate_labels(
+            labels=labels,
+            category_id_col=category_id_col,
+            category_name_col=category_name_col,
+            supercategory_col=supercategory_col,
+        )
+
+
+def test_validate_labels_invalid_range(overlapping_labels: gpd.GeoDataFrame):
+    # dropping everything except geometry
+    labels = overlapping_labels[["geometry"]]
+
+    category_ids = np.arange(labels.index.size)
+    category_names = np.random.choice(list(ascii_lowercase), labels.index.size)
+    supercategory_names = np.random.choice(list(ascii_lowercase), labels.index.size)
+
+    category_id_col = "category_ids"
+    category_name_col = "category_names"
+    supercategory_col = "supercategory_names"
+
+    labels[category_id_col] = category_ids
+    labels[category_name_col] = category_names
+    labels[supercategory_col] = supercategory_names
+
+    with pytest.raises(SchemaError):
+        _ = validate_labels(
+            labels=labels,
+            category_id_col=category_id_col,
+            category_name_col=category_name_col,
+            supercategory_col=supercategory_col,
+        )
+
+
+def test_validate_labels_invalid_type(overlapping_labels: gpd.GeoDataFrame):
+    # dropping everything except geometry
+    labels = overlapping_labels[["geometry"]]
+
+    category_ids = np.arange(1, labels.index.size + 1)
+    category_names = category_ids
+    category_id_col = "category_ids"
+    category_name_col = "category_names"
+    labels[category_id_col] = category_ids
+    labels[category_name_col] = category_names
+
+    with pytest.raises(SchemaError):
+        _ = validate_labels(
+            labels=labels,
+            category_id_col=category_id_col,
+            category_name_col=category_name_col,
+        )
+
+
+def test_update_labels(overlapping_labels):
+    # dropping everything except geometry
+    labels = overlapping_labels[["geometry"]]
+
+    # can be any name, as long as they contain validated values (see validate_labels)
+    category_id_col = "ids"
+    category_name_col = "names"
+
+    # categories are always made from existing or new labels
+    ids = np.arange(1, 10)  # i.e. unique
+    names = ids.astype(str)
+    supers = np.full(names.shape, fill_value="1")
+    categories = []
+    for cid, name, super in zip(ids, names, supers):
+        category = Category(id=cid, name=name, supercategory=super)
+        categories.append(category)
+
+    # populating labels
+    labels[category_id_col] = np.random.choice(ids, labels.index.size)
+    labels[category_name_col] = np.random.choice(names, labels.index.size)
+
+    # adding COCO keys
+    updated_labels = update_labels(
+        labels=labels,
+        categories=categories,
+        category_id_col=category_id_col,
+        category_name_col=category_name_col,
+    )
+
+    # checking if all coco keys are present
+    assert np.all(np.isin(["id", "name", "supercategory"], updated_labels.columns))
+    assert np.all(np.isin(updated_labels["id"].values, ids))
+    assert np.all(np.isin(updated_labels["name"].values, names))
+
+    # shape should not change, only values
+    assert labels.shape == updated_labels.shape
+
+
+def test_update_labels_ids(overlapping_labels):
+    # dropping everything except geometry
+    labels = overlapping_labels[["geometry"]]
+
+    # can be any name, as long as they contain validated values (see validate_labels)
+    category_id_col = "ids"
+    category_name_col = None
+
+    # categories are always made from existing or new labels
+    ids = np.arange(1, 10)  # i.e. unique
+    names = ids.astype(str)
+    supers = np.full(names.shape, fill_value="1")
+    categories = []
+    for cid, name, super in zip(ids, names, supers):
+        category = Category(id=cid, name=name, supercategory=super)
+        categories.append(category)
+
+    # populating labels
+    labels[category_id_col] = np.random.choice(ids, labels.index.size)
+
+    # adding COCO keys
+    updated_labels = update_labels(
+        labels=labels,
+        categories=categories,
+        category_id_col=category_id_col,
+        category_name_col=category_name_col,
+    )
+
+    # checking if all coco keys are present
+    assert np.all(np.isin(["id", "name", "supercategory"], updated_labels.columns))
+    assert np.all(np.isin(updated_labels["id"].values, ids))
+    assert np.all(np.isin(updated_labels["name"].values, names))
+
+    # shape should not change, only values
+    assert labels.shape == updated_labels.shape
+
+
+def test_update_labels_names(overlapping_labels):
+    # dropping everything except geometry
+    labels = overlapping_labels[["geometry"]]
+
+    # can be any name, as long as they contain validated values (see validate_labels)
+    category_id_col = None
+    category_name_col = "names"
+
+    # categories are always made from existing or new labels
+    ids = np.arange(1, 10)  # i.e. unique
+    names = ids.astype(str)
+    supers = np.full(names.shape, fill_value="1")
+    categories = []
+    for cid, name, super in zip(ids, names, supers):
+        category = Category(id=cid, name=name, supercategory=super)
+        categories.append(category)
+
+    # populating labels
+    labels[category_id_col] = np.random.choice(ids, labels.index.size)
+
+    # adding COCO keys
+    updated_labels = update_labels(
+        labels=labels,
+        categories=categories,
+        category_id_col=category_id_col,
+        category_name_col=category_name_col,
+    )
+
+    # checking if all coco keys are present
+    assert np.all(np.isin(["id", "name", "supercategory"], updated_labels.columns))
+    assert np.all(np.isin(updated_labels["id"].values, ids))
+    assert np.all(np.isin(updated_labels["name"].values, names))
+
+    # shape should not change, only values
+    assert labels.shape == updated_labels.shape
+
+
+def test_update_labels_faulty(overlapping_labels):
+    # only testing missing input and input length (input data is already guaranteed to
+    # be valid by other methods)
+
+    # dropping everything except geometry
+    labels = overlapping_labels[["geometry"]]
+
+    # can be any name, as long as they contain validated values (see validate_labels)
+    category_id_col = "ids"
+    category_name_col = "names"
+
+    # categories are always made from existing or new labels
+    ids = np.arange(1, 10)  # i.e. unique
+    names = ids.astype(str)
+    supers = np.full(names.shape, fill_value="1")
+    categories = []
+    for cid, name, super in zip(ids, names, supers):
+        category = Category(id=cid, name=name, supercategory=super)
+        categories.append(category)
+
+    # Missing atrributes
+    with pytest.raises(AttributeError):
+        _ = update_labels(
+            labels=labels,
+            categories=categories,
+            category_id_col=None,
+            category_name_col=None,
+        )
+
+    # Empty arrays
+    labels[category_id_col] = np.empty(shape=labels.index.size)
+    labels[category_name_col] = np.empty(shape=labels.index.size)
 
     with pytest.raises(ValueError):
-        _ = assert_valid_categories(random_words)
+        _ = update_labels(
+            labels=labels,
+            categories=categories,
+            category_id_col=category_id_col,
+            category_name_col=category_name_col,
+        )
