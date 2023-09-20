@@ -57,7 +57,7 @@ def append_dataset(
     :param id_attribute: Column containing category_id values
     :param name_attribute: Column containing category_name values
     :param super_attribute: Column containing supercategory values
-    :return: CocoDataset instance with n appended Image, Category and Annotation instances
+    :return: CocoDataset with n appended Image, Category and Annotation instances
     """
 
     # checks presence, types and values of all required attributes
