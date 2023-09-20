@@ -2,7 +2,6 @@ import warnings
 from rasterio.errors import NotGeoreferencedWarning
 from .coco_processing import labels_to_dataset
 from .coco_manager import create_dataset, load_dataset, save_dataset
-from .cli import build_coco
 
 # We make this specific warning 'catchable' to ensure that all rasterio clips are valid
 warnings.filterwarnings(
