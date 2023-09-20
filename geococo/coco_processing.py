@@ -5,7 +5,6 @@ from typing import List, Tuple
 import geopandas as gpd
 import numpy as np
 import rasterio
-from pandas import Series
 from typing import Optional
 from rasterio.io import DatasetReader
 from rasterio.mask import mask as riomask
@@ -66,23 +65,11 @@ def labels_to_dataset(
         supercategory_col=supercategory_col,
     )
 
-    # dumping series to array (if present)
-    category_ids = labels.get(category_id_col)
-    category_ids = category_ids.values if isinstance(category_ids, Series) else None
-    category_names = labels.get(category_name_col)
-    category_names = (
-        category_names.values if isinstance(category_names, Series) else None
-    )
-    supercategory_names = labels.get(supercategory_col)
-    supercategory_names = (
-        supercategory_names.values if isinstance(supercategory_names, Series) else None
-    )
-
-    # adding new Category instances (if any)
+    # adding new Category instances from labels (if any)
     dataset.add_categories(
-        category_ids=category_ids,
-        category_names=category_names,
-        supercategory_names=supercategory_names,
+        category_ids=labels.get(category_id_col),
+        category_names=labels.get(category_name_col),
+        super_names=labels.get(supercategory_col),
     )
 
     # updating labels with validated COCO keys (i.e. 'name', 'id', 'supercategory')
