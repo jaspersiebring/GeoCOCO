@@ -117,7 +117,7 @@ class CocoDataset(BaseModel):
         # ensuring equal size for category names and ids (if given)
         else:
             assert category_names.shape == original_shape  # type: ignore[union-attr]
-            category_names = category_names[indices][~member_mask]  # type: ignore[index]
+            category_names = category_names[indices][~member_mask] # type: ignore[index]
             category_ids = new_members
 
         # iteratively instancing and appending Category from set ids, names and supers
