@@ -3,7 +3,7 @@ import geopandas as gpd
 import rasterio
 import numpy as np
 from datetime import datetime
-from geococo.coco_processing import labels_to_dataset
+from geococo.coco_processing import append_dataset
 from geococo.coco_models import CocoDataset, Info
 
 
@@ -19,7 +19,7 @@ def test_labels_to_dataset_new_dataset(
         # Creating empty CocoDataset as input for labels_to_dataset
         info = Info(version="0.0.1", date_created=datetime.now())
         dataset = CocoDataset(info=info)
-        dataset = labels_to_dataset(
+        dataset = append_dataset(
             dataset=dataset,
             images_dir=tmp_path,
             src=raster_source,
@@ -57,7 +57,7 @@ def test_labels_to_dataset_append_dataset(
         # Creating empty CocoDataset as input for labels_to_dataset
         info = Info(version="0.0.1", date_created=datetime.now())
         dataset = CocoDataset(info=info)
-        dataset = labels_to_dataset(
+        dataset = append_dataset(
             dataset=dataset,
             images_dir=tmp_path,
             src=raster_source,
@@ -76,7 +76,7 @@ def test_labels_to_dataset_append_dataset(
         previous_image_id = dataset.next_image_id - 1
         previous_annotation_id = dataset.next_annotation_id - 1
 
-        dataset = labels_to_dataset(
+        dataset = append_dataset(
             dataset=dataset,
             images_dir=tmp_path,
             src=raster_source,
@@ -115,7 +115,7 @@ def test_labels_to_dataset_append_with_new_categories(
         # Creating empty CocoDataset as input for labels_to_dataset
         info = Info(version="0.0.1", date_created=datetime.now())
         dataset = CocoDataset(info=info)
-        dataset = labels_to_dataset(
+        dataset = append_dataset(
             dataset=dataset,
             images_dir=tmp_path,
             src=raster_source,
@@ -142,7 +142,7 @@ def test_labels_to_dataset_append_with_new_categories(
         overlapping_labels.loc[2, "category_id"] = 6
         overlapping_labels.loc[2, "class_names"] = "Six"
 
-        dataset = labels_to_dataset(
+        dataset = append_dataset(
             dataset=dataset,
             images_dir=tmp_path,
             src=raster_source,

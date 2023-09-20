@@ -24,7 +24,7 @@ from geococo.utils import (
 )
 
 
-def labels_to_dataset(
+def append_dataset(
     dataset: CocoDataset,
     images_dir: pathlib.Path,
     src: DatasetReader,

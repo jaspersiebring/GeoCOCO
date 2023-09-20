@@ -3,7 +3,7 @@ import pathlib
 from datetime import datetime
 import geopandas as gpd
 import rasterio
-from geococo.coco_processing import labels_to_dataset
+from geococo.coco_processing import append_dataset
 from geococo.coco_manager import save_dataset, load_dataset, create_dataset
 from typing_extensions import Annotated
 from typing import Optional
@@ -26,7 +26,7 @@ def new(
         ),
     ]
 ) -> None:
-    """Initialize a new CocoDataset and save it to json_path."""
+    """Initialize a new CocoDataset with user-prompted metadata"""
 
     print("Creating new dataset..")
     description = input("Dataset description: ")
@@ -67,7 +67,9 @@ def copy(
         typer.Option(help="Whether to prompt the user for new metadata"),
     ] = True,
 ) -> None:
-    """Copies a CocoDataset from source_path, prompts user for new metadata (optional)
+    """Copy and (optionally) update the metadata of an existing CocoDataset 
+    
+    Copies a CocoDataset from source_path, prompts user for new metadata (optional)
     and saves it to dest_path."""
 
     # Loading CocoDataset model from json_path
@@ -154,7 +156,7 @@ def add(
         typer.Option(help="Name of column containing supercategory values"),
     ] = None,
 ) -> None:
-    """Transform and add GIS annotations to an existing COCO dataset.
+    """Transform and add GIS annotations to an existing CocoDataset
 
     This method generates a COCO dataset by moving across the given image (image_path)
     with a moving window (image_size), constantly checking for intersecting annotations
@@ -177,7 +179,7 @@ def add(
     labels = gpd.read_file(labels_path)
     with rasterio.open(image_path) as src:
         # Find and save all Annotation instances
-        dataset = labels_to_dataset(
+        dataset = append_dataset(
             dataset=dataset,
             images_dir=output_dir,
             src=src,
