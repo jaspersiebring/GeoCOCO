@@ -56,7 +56,7 @@ def copy(
     dest_json: Annotated[
         pathlib.Path,
         typer.Argument(
-            help="Output path for CocoDataset copy",
+            help="Output path for copied CocoDataset",
             exists=True,
             readable=True,
             resolve_path=True,
