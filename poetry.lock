@@ -223,21 +223,6 @@ click = ">=4.0"
 test = ["pytest-cov"]
 
 [[package]]
-name = "cloup"
-version = "2.0.0.post1"
-description = "Adds features to Click: option groups, constraints, subcommand sections and help themes."
-optional = false
-python-versions = ">=3.7"
-files = [
-    {file = "cloup-2.0.0.post1-py2.py3-none-any.whl", hash = "sha256:da37c0a940e066c4c2e17c351448e797333926c0e00a15139dbf57c2c4fab4d6"},
-    {file = "cloup-2.0.0.post1.tar.gz", hash = "sha256:1430c9075062e09cb64cd84ab7afe5d5acd28adf561d6ab3109eb1975bbd7b6b"},
-]
-
-[package.dependencies]
-click = ">=8.0,<9.0"
-typing-extensions = {version = "*", markers = "python_version <= \"3.8\""}
-
-[[package]]
 name = "colorama"
 version = "0.4.6"
 description = "Cross-platform colored terminal text."
@@ -473,17 +458,6 @@ untokenize = ">=0.1.1,<0.2.0"
 
 [package.extras]
 tomli = ["tomli (>=2.0.0,<3.0.0)"]
-
-[[package]]
-name = "docstring-parser"
-version = "0.15"
-description = "Parse Python docstrings in reST, Google and Numpydoc format"
-optional = false
-python-versions = ">=3.6,<4.0"
-files = [
-    {file = "docstring_parser-0.15-py3-none-any.whl", hash = "sha256:d1679b86250d269d06a99670924d6bce45adc00b08069dae8c47d98e89b667a9"},
-    {file = "docstring_parser-0.15.tar.gz", hash = "sha256:48ddc093e8b1865899956fcc03b03e66bb7240c310fac5af81814580c55bf682"},
-]
 
 [[package]]
 name = "exceptiongroup"
@@ -1602,24 +1576,26 @@ testing-integration = ["build[virtualenv] (>=1.0.3)", "filelock (>=3.4.0)", "jar
 
 [[package]]
 name = "setuptools-scm"
-version = "7.1.0"
+version = "8.0.1"
 description = "the blessed package to manage your versions by scm tags"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "setuptools_scm-7.1.0-py3-none-any.whl", hash = "sha256:73988b6d848709e2af142aa48c986ea29592bbcfca5375678064708205253d8e"},
-    {file = "setuptools_scm-7.1.0.tar.gz", hash = "sha256:6c508345a771aad7d56ebff0e70628bf2b0ec7573762be9960214730de278f27"},
+    {file = "setuptools-scm-8.0.1.tar.gz", hash = "sha256:e69bf0b8265fdc8f4e070c98235b1b0816ffa8b7f91153400404bf68496012e3"},
+    {file = "setuptools_scm-8.0.1-py3-none-any.whl", hash = "sha256:c132f5a8dc508c8113f865c709041d1b15f7d500442220174c38397607797a91"},
 ]
 
 [package.dependencies]
-packaging = ">=20.0"
+importlib-metadata = {version = ">=4.6", markers = "python_version < \"3.10\""}
+packaging = ">=20"
 setuptools = "*"
-tomli = {version = ">=1.0.0", markers = "python_version < \"3.11\""}
-typing-extensions = "*"
+tomli = {version = ">=1", markers = "python_version < \"3.11\""}
+typing-extensions = {version = "*", markers = "python_version < \"3.11\""}
 
 [package.extras]
-test = ["pytest (>=6.2)", "virtualenv (>20)"]
-toml = ["setuptools (>=42)"]
+docs = ["entangled-cli[rich]", "mkdocs", "mkdocs-entangled-plugin", "mkdocs-material", "mkdocstrings[python]", "pygments"]
+rich = ["rich"]
+test = ["pytest", "rich", "virtualenv (>20)"]
 
 [[package]]
 name = "shapely"
@@ -1755,24 +1731,25 @@ doc = ["Sphinx (>=7)", "packaging", "sphinx-autodoc-typehints (>=1.2.0)"]
 test = ["coverage[toml] (>=7)", "mypy (>=1.2.0)", "pytest (>=7)"]
 
 [[package]]
-name = "typer-cloup"
-version = "0.11.0"
+name = "typer"
+version = "0.9.0"
 description = "Typer, build great CLIs. Easy to code. Based on Python type hints."
 optional = false
-python-versions = ">= 3.7"
+python-versions = ">=3.6"
 files = [
-    {file = "typer-cloup-0.11.0.tar.gz", hash = "sha256:3a9f59e1c702026844316b744f959cfee5ea9db108f12810831bcd3673200596"},
-    {file = "typer_cloup-0.11.0-py3-none-any.whl", hash = "sha256:75d80b5354d16dc88ad39b613974a97bb3102cb2add78267046f12811d3561f1"},
+    {file = "typer-0.9.0-py3-none-any.whl", hash = "sha256:5d96d986a21493606a358cae4461bd8cdf83cbf33a5aa950ae629ca3b51467ee"},
+    {file = "typer-0.9.0.tar.gz", hash = "sha256:50922fd79aea2f4751a8e0408ff10d2662bd0c8bbfa84755a699f3bada2978b2"},
 ]
 
 [package.dependencies]
-cloup = ">=2.0.0,<2.1.0"
+click = ">=7.1.1,<9.0.0"
+typing-extensions = ">=3.7.4.3"
 
 [package.extras]
-all = ["colorama (>=0.4.4,<0.5.0)", "docstring_parser (>=0.15,<1.0)"]
-dev = ["autoflake (>=1.4.0,<1.5.0)", "flake8 (>=4.0.1,<4.1.0)", "pre-commit (>=2.19.0,<2.20.0)"]
-doc = ["cairosvg (>=2.5.2,<2.6.0)", "mdx-include (>=1.4.1,<1.5.0)", "mkdocs (>=1.2.4,<1.3.0)", "mkdocs-material (>=8.1.11,<8.2.0)", "pillow (>=9.3.0,<9.4.0)"]
-test = ["black (>=22.3.0,<22.4.0)", "coverage (>=6.0.0,<6.1.0)", "docstring_parser (>=0.15,<1.0)", "isort (>=5.10.1,<5.11.0)", "mypy (>=0.950,<1.0)", "pytest (>=7.1.2,<7.2.0)", "pytest-cov (>=3.0.0,<3.1.0)", "pytest-forked (>=1.4.0,<1.5.0)", "pytest-sugar (>=0.9.4,<0.10.0)", "pytest-xdist (>=3.0.2,<3.1.0)"]
+all = ["colorama (>=0.4.3,<0.5.0)", "rich (>=10.11.0,<14.0.0)", "shellingham (>=1.3.0,<2.0.0)"]
+dev = ["autoflake (>=1.3.1,<2.0.0)", "flake8 (>=3.8.3,<4.0.0)", "pre-commit (>=2.17.0,<3.0.0)"]
+doc = ["cairosvg (>=2.5.2,<3.0.0)", "mdx-include (>=1.4.1,<2.0.0)", "mkdocs (>=1.1.2,<2.0.0)", "mkdocs-material (>=8.1.4,<9.0.0)", "pillow (>=9.3.0,<10.0.0)"]
+test = ["black (>=22.3.0,<23.0.0)", "coverage (>=6.2,<7.0)", "isort (>=5.0.6,<6.0.0)", "mypy (==0.910)", "pytest (>=4.4.0,<8.0.0)", "pytest-cov (>=2.10.0,<5.0.0)", "pytest-sugar (>=0.9.4,<0.10.0)", "pytest-xdist (>=1.32.0,<4.0.0)", "rich (>=10.11.0,<14.0.0)", "shellingham (>=1.3.0,<2.0.0)"]
 
 [[package]]
 name = "types-pycocotools"
@@ -1809,13 +1786,13 @@ files = [
 
 [[package]]
 name = "typing-extensions"
-version = "4.7.1"
-description = "Backported and Experimental Type Hints for Python 3.7+"
+version = "4.8.0"
+description = "Backported and Experimental Type Hints for Python 3.8+"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "typing_extensions-4.7.1-py3-none-any.whl", hash = "sha256:440d5dd3af93b060174bf433bccd69b0babc3b15b1a8dca43789fd7f61514b36"},
-    {file = "typing_extensions-4.7.1.tar.gz", hash = "sha256:b75ddc264f0ba5615db7ba217daeb99701ad295353c45f9e95963337ceeeffb2"},
+    {file = "typing_extensions-4.8.0-py3-none-any.whl", hash = "sha256:8f92fc8806f9a6b641eaa5318da32b44d401efaac0f6678c9bc448ba3605faa0"},
+    {file = "typing_extensions-4.8.0.tar.gz", hash = "sha256:df8e4339e9cb77357558cbdbceca33c303714cf861d1eef15e1070055ae8b7ef"},
 ]
 
 [[package]]
@@ -1940,20 +1917,20 @@ files = [
 
 [[package]]
 name = "zipp"
-version = "3.16.2"
+version = "3.17.0"
 description = "Backport of pathlib-compatible object wrapper for zip files"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "zipp-3.16.2-py3-none-any.whl", hash = "sha256:679e51dd4403591b2d6838a48de3d283f3d188412a9782faadf845f298736ba0"},
-    {file = "zipp-3.16.2.tar.gz", hash = "sha256:ebc15946aa78bd63458992fc81ec3b6f7b1e92d51c35e6de1c3804e73b799147"},
+    {file = "zipp-3.17.0-py3-none-any.whl", hash = "sha256:0e923e726174922dce09c53c59ad483ff7bbb8e572e00c7f7c46b88556409f31"},
+    {file = "zipp-3.17.0.tar.gz", hash = "sha256:84e64a1c28cf7e91ed2078bb8cc8c259cb19b76942096c8d7b84947690cabaf0"},
 ]
 
 [package.extras]
-docs = ["furo", "jaraco.packaging (>=9.3)", "jaraco.tidelift (>=1.4)", "rst.linker (>=1.9)", "sphinx (>=3.5)", "sphinx-lint"]
+docs = ["furo", "jaraco.packaging (>=9.3)", "jaraco.tidelift (>=1.4)", "rst.linker (>=1.9)", "sphinx (<7.2.5)", "sphinx (>=3.5)", "sphinx-lint"]
 testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "pytest (>=6)", "pytest-black (>=0.3.7)", "pytest-checkdocs (>=2.4)", "pytest-cov", "pytest-enabler (>=2.2)", "pytest-ignore-flaky", "pytest-mypy (>=0.9.1)", "pytest-ruff"]
 
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "f17b1840b26f5eec66b55c4019a8a7c30c7f2cad21a86739fca4ce7167cba178"
+content-hash = "e6b1ff62b0f09826780ffaf7982ff1e47a08394a2054db9f133fcb5ac987aaba"
