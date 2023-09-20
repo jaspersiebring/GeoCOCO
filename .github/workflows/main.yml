@@ -78,6 +78,7 @@ jobs:
         with:
           files: ${{ needs.build.outputs.RELEASE_NAME }}/*
           tag_name: ${{ needs.build.outputs.RELEASE_VERSION }}
+          generate_release_notes: true
           prerelease: false
         
 
