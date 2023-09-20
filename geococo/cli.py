@@ -1,3 +1,4 @@
+from typing import Optional
 import typer_cloup as typer
 import pathlib
 from datetime import datetime
@@ -14,7 +15,9 @@ def build_coco(
     output_dir: pathlib.Path,
     width: int,
     height: int,
-    category_attribute: str = "category_id",
+    category_id_col: Optional[str] = "category_id",
+    category_name_col: Optional[str] = None,
+    supercategory_col: Optional[str] = None,
 ) -> None:
     """Transform your GIS annotations into a COCO dataset.
 
@@ -38,14 +41,14 @@ def build_coco(
     :param output_dir: Path to the output directory for image subsets
     :param width: Width of the output images
     :param height: Height of the output images
-    :param category_attribute: Column that contains category_id values per annotation
-        feature
+    :param category_id_col: Column containing category_id values
+    :param category_name_col: Column containing category_name values
+    :param supercategory_col: Column containing supercategory values
     """
 
     if isinstance(json_path, pathlib.Path) and json_path.exists():
         # Create and populate instance of CocoDataset from json_path
         dataset = load_dataset(json_path=json_path)
-
     else:
         # Create instance of CocoDataset from user input
         print("Creating new dataset..")
@@ -62,16 +65,8 @@ def build_coco(
             date_created=date_created,
         )
 
-    # Loading and validating GIS data
+    # Loading GIS data
     labels = gpd.read_file(labels_path)
-    if not labels.is_valid.all():
-        raise ValueError("Invalid geometry found, exiting..")
-    elif category_attribute not in labels.columns:
-        raise ValueError(
-            f"User-specified category attribute (={category_attribute}) not found in "
-            "input labels, exiting.."
-        )
-
     with rasterio.open(image_path) as src:
         # Appending Annotation instances and clipping the image part that contains them
         dataset = labels_to_dataset(
@@ -80,6 +75,9 @@ def build_coco(
             src=src,
             labels=labels,
             window_bounds=[(width, height)],
+            category_id_col=category_id_col,
+            category_name_col=category_name_col,
+            supercategory_col=supercategory_col,
         )
 
     # Encode CocoDataset instance as JSON and save to json_path
