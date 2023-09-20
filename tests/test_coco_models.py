@@ -2,8 +2,10 @@ from __future__ import annotations
 import pytest
 import os
 import numpy as np
+import pandas as pd
 import pathlib
 from datetime import datetime
+from pydantic import ValidationError
 from geococo.coco_models import (
     CocoDataset,
     Info,
@@ -171,14 +173,14 @@ def test_add_categories_by_ids():
     assert dataset.categories == []
 
     # adding three unique classes
-    category_ids = np.array([1, 2, 2, 5, 5])
+    category_ids = pd.Series([1, 2, 2, 5, 5])
     category_names = None
     supercategory_names = None
 
     dataset.add_categories(
         category_ids=category_ids,
         category_names=category_names,
-        supercategory_names=supercategory_names,
+        super_names=supercategory_names,
     )
 
     assert len(dataset.categories) == np.unique(category_ids).size
@@ -197,13 +199,13 @@ def test_add_categories_by_names():
 
     # adding three unique classes
     category_ids = None
-    category_names = np.array([1, 2, 2, 5, 5]).astype(str)
+    category_names = pd.Series([1, 2, 2, 5, 5]).astype(str)
     supercategory_names = None
 
     dataset.add_categories(
         category_ids=category_ids,
         category_names=category_names,
-        supercategory_names=supercategory_names,
+        super_names=supercategory_names,
     )
 
     assert len(dataset.categories) == np.unique(category_names).size
@@ -221,14 +223,14 @@ def test_add_categories_by_names_and_ids():
     assert dataset.categories == []
 
     # adding three unique classes
-    category_ids = np.array([1, 2, 2, 5, 5])
-    category_names = np.array(["One", "Two", "Two", "Five", "Five"])
+    category_ids = pd.Series([1, 2, 2, 5, 5])
+    category_names = pd.Series(["One", "Two", "Two", "Five", "Five"])
     supercategory_names = None
 
     dataset.add_categories(
         category_ids=category_ids,
         category_names=category_names,
-        supercategory_names=supercategory_names,
+        super_names=supercategory_names,
     )
 
     assert len(dataset.categories) == np.unique(category_names).size
@@ -251,14 +253,14 @@ def test_add_categories_with_supers():
     assert dataset.categories == []
 
     # adding three unique classes
-    category_ids = np.array([1, 2, 2, 5, 5])
-    category_names = np.array(["One", "Two", "Two", "Five", "Five"])
-    supercategory_names = np.array(["A", "A", "A", "B", "B"])
+    category_ids = pd.Series([1, 2, 2, 5, 5])
+    category_names = pd.Series(["One", "Two", "Two", "Five", "Five"])
+    supercategory_names = pd.Series(["A", "A", "A", "B", "B"])
 
     dataset.add_categories(
         category_ids=category_ids,
         category_names=category_names,
-        supercategory_names=supercategory_names,
+        super_names=supercategory_names,
     )
 
     assert len(dataset.categories) == np.unique(category_names).size
@@ -282,14 +284,14 @@ def test_add_categories_by_names_and_ids_append_specific():
     assert dataset.categories == []
 
     # adding three unique classes
-    category_ids = np.array([1, 2, 2, 5, 5])
-    category_names = np.array(["One", "Two", "Two", "Five", "Five"])
+    category_ids = pd.Series([1, 2, 2, 5, 5])
+    category_names = pd.Series(["One", "Two", "Two", "Five", "Five"])
     supercategory_names = None
 
     dataset.add_categories(
         category_ids=category_ids,
         category_names=category_names,
-        supercategory_names=supercategory_names,
+        super_names=supercategory_names,
     )
 
     assert len(dataset.categories) == np.unique(category_names).size
@@ -310,14 +312,14 @@ def test_add_categories_by_names_and_ids_append_specific():
     n_categories = len(dataset.categories)
 
     # adding one new class and 4 duplicates
-    category_ids = np.array([1, 8, 2, 5, 5])
-    category_names = np.array(["One", "Eight", "Two", "Five", "Five"])
+    category_ids = pd.Series([1, 8, 2, 5, 5])
+    category_names = pd.Series(["One", "Eight", "Two", "Five", "Five"])
     supercategory_names = None
 
     dataset.add_categories(
         category_ids=category_ids,
         category_names=category_names,
-        supercategory_names=supercategory_names,
+        super_names=supercategory_names,
     )
 
     assert len(dataset.categories) == n_categories + 1
@@ -330,14 +332,14 @@ def test_add_categories_by_names_and_ids_append_auto():
     assert dataset.categories == []
 
     # adding three unique classes
-    category_ids = np.array([1, 2, 2, 5, 5])
-    category_names = np.array(["One", "Two", "Two", "Five", "Five"])
+    category_ids = pd.Series([1, 2, 2, 5, 5])
+    category_names = pd.Series(["One", "Two", "Two", "Five", "Five"])
     supercategory_names = None
 
     dataset.add_categories(
         category_ids=category_ids,
         category_names=category_names,
-        supercategory_names=supercategory_names,
+        super_names=supercategory_names,
     )
 
     assert len(dataset.categories) == np.unique(category_names).size
@@ -359,13 +361,13 @@ def test_add_categories_by_names_and_ids_append_auto():
 
     # adding one new class and 4 duplicates (only by name, not by id)
     category_ids = None
-    category_names = np.array(["One", "Eight", "Two", "Five", "Five"])
+    category_names = pd.Series(["One", "Eight", "Two", "Five", "Five"])
     supercategory_names = None
 
     dataset.add_categories(
         category_ids=category_ids,
         category_names=category_names,
-        supercategory_names=supercategory_names,
+        super_names=supercategory_names,
     )
 
     assert len(dataset.categories) == n_categories + 1
@@ -378,14 +380,14 @@ def test_add_categories_by_names_and_ids_duplicates():
     assert dataset.categories == []
 
     # adding three unique classes
-    category_ids = np.array([1, 2, 2, 5, 5])
-    category_names = np.array(["One", "Two", "Two", "Five", "Five"])
+    category_ids = pd.Series([1, 2, 2, 5, 5])
+    category_names = pd.Series(["One", "Two", "Two", "Five", "Five"])
     supercategory_names = None
 
     dataset.add_categories(
         category_ids=category_ids,
         category_names=category_names,
-        supercategory_names=supercategory_names,
+        super_names=supercategory_names,
     )
 
     assert len(dataset.categories) == np.unique(category_names).size
@@ -407,14 +409,14 @@ def test_add_categories_by_names_and_ids_duplicates():
     cats = [cat for cat in dataset.categories]
 
     # adding duplicate ids and names
-    category_ids = np.array([1, 2, 2, 5, 5])
-    category_names = np.array(["One", "Two", "Two", "Five", "Five"])
+    category_ids = pd.Series([1, 2, 2, 5, 5])
+    category_names = pd.Series(["One", "Two", "Two", "Five", "Five"])
     supercategory_names = None
 
     dataset.add_categories(
         category_ids=category_ids,
         category_names=category_names,
-        supercategory_names=supercategory_names,
+        super_names=supercategory_names,
     )
 
     assert len(dataset.categories) == n_categories
@@ -433,20 +435,20 @@ def test_add_categories_faulty():
         dataset.add_categories(
             category_ids=category_ids,
             category_names=category_names,
-            supercategory_names=supercategory_names,
+            super_names=supercategory_names,
         )
 
     dataset = CocoDataset(info=Info())
     assert dataset.categories == []
 
     # Ids of different len than names
-    category_ids = np.array([1, 2, 3])
-    category_names = np.array(["1", "2"])
+    category_ids = pd.Series([1, 2, 3])
+    category_names = pd.Series(["1", "2"])
     with pytest.raises(AssertionError):
         dataset.add_categories(
             category_ids=category_ids,
             category_names=category_names,
-            supercategory_names=supercategory_names,
+            super_names=supercategory_names,
         )
 
     dataset = CocoDataset(info=Info())
@@ -459,16 +461,15 @@ def test_add_categories_faulty():
         dataset.add_categories(
             category_ids=category_ids,
             category_names=category_names,
-            supercategory_names=supercategory_names,
+            super_names=supercategory_names,
         )
 
     dataset = CocoDataset(info=Info())
     assert dataset.categories == []
 
     # Nullable arrays (would also get caught by validate_labels
-    category_ids = np.array([1, 2, 3, None, 5])
-
-    with pytest.raises(TypeError):
+    category_ids = pd.Series([1, 2, 3, None, 5])
+    with pytest.raises(ValidationError):
         dataset.add_categories(
-            category_ids=category_ids, category_names=None, supercategory_names=None
+            category_ids=category_ids, category_names=None, super_names=None
         )

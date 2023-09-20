@@ -2,6 +2,7 @@ from __future__ import annotations
 import numpy as np
 import pathlib
 import pandas as pd
+from pandas import Series
 from datetime import datetime
 from typing import List, Optional, Dict, Any
 from typing_extensions import TypedDict
@@ -50,9 +51,9 @@ class CocoDataset(BaseModel):
 
     def add_categories(
         self,
-        category_ids: Optional[np.ndarray],
-        category_names: Optional[np.ndarray],
-        supercategory_names: Optional[np.ndarray],
+        category_ids: Optional[Series],
+        category_names: Optional[Series],
+        super_names: Optional[Series],
     ) -> None:
         # initializing values
         super_default = "1"
@@ -65,13 +66,15 @@ class CocoDataset(BaseModel):
         )
 
         # checking if names can be assigned to uid_array (used to check duplicates)
-        if isinstance(category_names, np.ndarray):
+        if category_names is not None:
+            category_names: np.ndarray = category_names.to_numpy()
             uid_array = category_names
             uid_attribute = "name"
             names_present = True
 
         # checking if ids can be assigned to uid_array (used to check duplicates)
-        if isinstance(category_ids, np.ndarray):
+        if category_ids is not None:
+            category_ids: np.ndarray = category_ids.to_numpy()
             uid_array = category_ids  # overrides existing array because ids are leading
             uid_attribute = "id"
             ids_present = True
@@ -89,11 +92,15 @@ class CocoDataset(BaseModel):
             return
 
         # creating default supercategory_names if not given
-        if not isinstance(supercategory_names, np.ndarray):
-            supercategory_names = np.full(shape=new_shape, fill_value=super_default)
+        if super_names is None:
+            super_names = np.full(
+                shape=new_shape,
+                fill_value=super_default
+                ) # type: ignore[assignment]
         else:
-            assert supercategory_names.shape == original_shape
-            supercategory_names = supercategory_names[indices][~member_mask]
+            super_names: np.ndarray = super_names.to_numpy()
+            assert super_names.shape == original_shape
+            super_names = super_names[indices][~member_mask]
 
         # creating default category_names if not given (str version of ids)
         if ids_present and not names_present:
@@ -105,16 +112,17 @@ class CocoDataset(BaseModel):
             max_id = category_pd.loc[pandas_mask, "id"].max()
             start = np.nansum([max_id, 1])
             end = start + new_members.size
-            category_ids = np.arange(start, end)
+            category_ids = np.arange(start, end) # type: ignore[assignment]
             category_names = new_members
         # ensuring equal size for category names and ids (if given)
         else:
-            assert category_names.shape == original_shape # type: ignore
-            category_names = category_names[indices][~member_mask] # type: ignore
+            assert category_names.shape == original_shape  # type: ignore[union-attr]
+            category_names = category_names[indices][~member_mask] # type: ignore[index]
             category_ids = new_members
 
         # iteratively instancing and appending Category from set ids, names and supers
-        for cid, name, super in zip(category_ids, category_names, supercategory_names):
+        cip = zip(category_ids, category_names, super_names)
+        for cid, name, super in cip:
             category = Category(id=cid, name=name, supercategory=super)
             self.categories.append(category)
 
