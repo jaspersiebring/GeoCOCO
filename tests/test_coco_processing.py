@@ -25,7 +25,7 @@ def test_labels_to_dataset_new_dataset(
             src=raster_source,
             labels=overlapping_labels,
             window_bounds=[(256, 256)],
-            category_name_col=category_attribute,
+            name_attribute=category_attribute,
         )
 
         # Checking if output has correct classes
@@ -63,7 +63,7 @@ def test_labels_to_dataset_append_dataset(
             src=raster_source,
             labels=overlapping_labels,
             window_bounds=[(256, 256)],
-            category_id_col=category_attribute,
+            id_attribute=category_attribute,
         )
 
         # Checking if output has correct classes
@@ -121,8 +121,8 @@ def test_labels_to_dataset_append_with_new_categories(
             src=raster_source,
             labels=overlapping_labels,
             window_bounds=[(256, 256)],
-            category_id_col=id_attribute,
-            category_name_col=name_attribute,
+            id_attribute=id_attribute,
+            name_attribute=name_attribute,
         )
 
         # Checking if output has correct classes
@@ -148,8 +148,8 @@ def test_labels_to_dataset_append_with_new_categories(
             src=raster_source,
             labels=overlapping_labels,
             window_bounds=[(256, 256)],
-            category_id_col=id_attribute,
-            category_name_col=name_attribute,
+            id_attribute=id_attribute,
+            name_attribute=name_attribute,
         )
 
         # Checking whether new data was added without touching existing data

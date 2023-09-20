@@ -183,9 +183,9 @@ def add(
             src=src,
             labels=labels,
             window_bounds=[(width, height)],
-            category_id_col=id_attribute,
-            category_name_col=name_attribute,
-            supercategory_col=super_attribute,
+            id_attribute=id_attribute,
+            name_attribute=name_attribute,
+            super_attribute=super_attribute,
         )
 
     # Encode CocoDataset instance as JSON and save to json_path

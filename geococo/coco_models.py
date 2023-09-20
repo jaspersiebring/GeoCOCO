@@ -141,7 +141,7 @@ class CocoDataset(BaseModel):
 
         self.info.version = str(version)
 
-    def verify_new_output_dir(self, images_dir: pathlib.Path) -> None:
+    def verify_used_dir(self, images_dir: pathlib.Path) -> None:
         output_dirs = np.unique([image.file_name.parent for image in self.images])
         if images_dir not in output_dirs:
             self.bump_version(bump_method="major")

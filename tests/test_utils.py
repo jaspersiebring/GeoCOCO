@@ -305,9 +305,9 @@ def test_validate_labels(overlapping_labels: gpd.GeoDataFrame):
 
     validated_labels = validate_labels(
         labels=labels,
-        category_id_col=category_id_col,
-        category_name_col=category_name_col,
-        supercategory_col=supercategory_col,
+        id_attribute=category_id_col,
+        name_attribute=category_name_col,
+        super_attribute=supercategory_col,
     )
 
     assert validated_labels.shape == labels.shape
@@ -321,7 +321,7 @@ def test_validate_labels_only_ids(overlapping_labels: gpd.GeoDataFrame):
     category_id_col = "category_ids"
     labels[category_id_col] = category_ids
 
-    validated_labels = validate_labels(labels=labels, category_id_col=category_id_col)
+    validated_labels = validate_labels(labels=labels, id_attribute=category_id_col)
 
     assert validated_labels.shape == labels.shape
     assert np.all(validated_labels == labels)
@@ -334,7 +334,7 @@ def test_validate_labels_id_casting(overlapping_labels: gpd.GeoDataFrame):
     category_id_col = "category_ids"
     labels[category_id_col] = category_ids
 
-    validated_labels = validate_labels(labels=labels, category_id_col=category_id_col)
+    validated_labels = validate_labels(labels=labels, id_attribute=category_id_col)
 
     assert validated_labels.shape == labels.shape
     assert np.all(validated_labels == labels)
@@ -349,7 +349,7 @@ def test_validate_labels_only_names(overlapping_labels: gpd.GeoDataFrame):
     category_name_col = "category_names"
     labels[category_name_col] = category_names
     validated_labels = validate_labels(
-        labels=labels, category_name_col=category_name_col
+        labels=labels, name_attribute=category_name_col
     )
 
     assert validated_labels.shape == labels.shape
@@ -377,9 +377,9 @@ def test_validate_labels_invalid_geom(overlapping_labels: gpd.GeoDataFrame):
     with pytest.raises(SchemaError):
         _ = validate_labels(
             labels=labels,
-            category_id_col=category_id_col,
-            category_name_col=category_name_col,
-            supercategory_col=supercategory_col,
+            id_attribute=category_id_col,
+            name_attribute=category_name_col,
+            super_attribute=supercategory_col,
         )
 
 
@@ -402,9 +402,9 @@ def test_validate_labels_invalid_range(overlapping_labels: gpd.GeoDataFrame):
     with pytest.raises(SchemaError):
         _ = validate_labels(
             labels=labels,
-            category_id_col=category_id_col,
-            category_name_col=category_name_col,
-            supercategory_col=supercategory_col,
+            id_attribute=category_id_col,
+            name_attribute=category_name_col,
+            super_attribute=supercategory_col,
         )
 
 
@@ -422,8 +422,8 @@ def test_validate_labels_invalid_type(overlapping_labels: gpd.GeoDataFrame):
     with pytest.raises(SchemaError):
         _ = validate_labels(
             labels=labels,
-            category_id_col=category_id_col,
-            category_name_col=category_name_col,
+            id_attribute=category_id_col,
+            name_attribute=category_name_col,
         )
 
 
@@ -452,8 +452,8 @@ def test_update_labels(overlapping_labels):
     updated_labels = update_labels(
         labels=labels,
         categories=categories,
-        category_id_col=category_id_col,
-        category_name_col=category_name_col,
+        id_attribute=category_id_col,
+        name_attribute=category_name_col,
     )
 
     # checking if all coco keys are present
@@ -489,8 +489,8 @@ def test_update_labels_ids(overlapping_labels):
     updated_labels = update_labels(
         labels=labels,
         categories=categories,
-        category_id_col=category_id_col,
-        category_name_col=category_name_col,
+        id_attribute=category_id_col,
+        name_attribute=category_name_col,
     )
 
     # checking if all coco keys are present
@@ -526,8 +526,8 @@ def test_update_labels_names(overlapping_labels):
     updated_labels = update_labels(
         labels=labels,
         categories=categories,
-        category_id_col=category_id_col,
-        category_name_col=category_name_col,
+        id_attribute=category_id_col,
+        name_attribute=category_name_col,
     )
 
     # checking if all coco keys are present
@@ -564,8 +564,8 @@ def test_update_labels_faulty(overlapping_labels):
         _ = update_labels(
             labels=labels,
             categories=categories,
-            category_id_col=None,
-            category_name_col=None,
+            id_attribute=None,
+            name_attribute=None,
         )
 
     # Empty arrays
@@ -576,6 +576,6 @@ def test_update_labels_faulty(overlapping_labels):
         _ = update_labels(
             labels=labels,
             categories=categories,
-            category_id_col=category_id_col,
-            category_name_col=category_name_col,
+            id_attribute=category_id_col,
+            name_attribute=category_name_col,
         )

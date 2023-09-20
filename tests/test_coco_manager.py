@@ -25,7 +25,7 @@ def test_load_dataset_full(
             src=raster_source,
             labels=overlapping_labels,
             window_bounds=[(256, 256)],
-            category_id_col="category_id",
+            id_attribute="category_id",
         )
 
     json_data = dataset.json()

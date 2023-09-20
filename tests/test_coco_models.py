@@ -164,7 +164,7 @@ def test_dataset_versions():
     assert dataset.info.version == "0.1.1"
 
     # major bump: if new output_dir
-    dataset.verify_new_output_dir(images_dir=pathlib.Path("b"))
+    dataset.verify_used_dir(images_dir=pathlib.Path("b"))
     assert dataset.info.version == "1.0.0"
 
 

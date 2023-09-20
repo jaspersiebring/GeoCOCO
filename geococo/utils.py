@@ -237,18 +237,18 @@ def estimate_schema(
 
 def validate_labels(
     labels: gpd.GeoDataFrame,
-    category_id_col: Optional[str] = "category_id",
-    category_name_col: Optional[str] = None,
-    supercategory_col: Optional[str] = None,
+    id_attribute: Optional[str] = "category_id",
+    name_attribute: Optional[str] = None,
+    super_attribute: Optional[str] = None,
 ) -> gpd.GeoDataFrame:
     """Validates all necessary attributes for a geococo-viable GeoDataFrame. It also
     checks for the presence of either category_id or category_name values and ensures
     valid geometry.
 
     :param labels: GeoDataFrame containing labels and category attributes
-    :param category_id_col: Column name that holds category_id values
-    :param category_name_col: Column name that holds category_name values
-    :param supercategory_col: Column name that holds supercategory values
+    :param id_attribute: Column name that holds category_id values
+    :param name_attribute: Column name that holds category_name values
+    :param super_attribute: Column name that holds supercategory values
     :return: Validated GeoDataFrame with coerced dtypes
     """
 
@@ -258,17 +258,17 @@ def validate_labels(
             pa.Check(lambda geoms: geoms.is_valid, error="Invalid geometry found"),
             nullable=False,
         ),
-        category_id_col: pa.Column(
+        id_attribute: pa.Column(
             int, pa.Check.greater_than(0), required=False, nullable=False, coerce=True
         ),
-        category_name_col: pa.Column(str, required=False, nullable=False),
-        supercategory_col: pa.Column(str, required=False, nullable=False),
+        name_attribute: pa.Column(str, required=False, nullable=False),
+        super_attribute: pa.Column(str, required=False, nullable=False),
     }
 
     schema = pa.DataFrameSchema(schema_dict)
     validated_labels = schema.validate(labels)
 
-    req_cols = np.array([category_id_col, category_name_col])
+    req_cols = np.array([id_attribute, name_attribute])
     if not np.isin(req_cols, validated_labels.columns).any():
         raise AttributeError("At least one category attribute must be present")
 
@@ -278,8 +278,8 @@ def validate_labels(
 def update_labels(
     labels: gpd.GeoDataFrame,
     categories: List[Category],
-    category_id_col: Optional[str] = "category_id",
-    category_name_col: Optional[str] = None,
+    id_attribute: Optional[str] = "category_id",
+    name_attribute: Optional[str] = None,
 ) -> gpd.GeoDataFrame:
     """Updates labels with validated (super)category names and ids from given Category
     instances (i.e. source of truth created from current and previous labels). This
@@ -290,8 +290,8 @@ def update_labels(
         validate_labels)
     :param categories: list of Category instances created from current and previous
         labels
-    :param category_id_col: Column name that holds category_id values
-    :param category_name_col: Column name that holds category_name values
+    :param id_attribute: Column name that holds category_id values
+    :param name_attribute: Column name that holds category_name values
     :return: labels with name, id and supercategory attributes from all given Category
         instances
     """
@@ -303,13 +303,13 @@ def update_labels(
     )
 
     # Finding indices for matching values of a given attribute (name or id)
-    if category_id_col in labels.columns:
+    if id_attribute in labels.columns:
         indices = np.where(
-            labels[category_id_col].values.reshape(-1, 1) == category_pd.id.values
+            labels[id_attribute].values.reshape(-1, 1) == category_pd.id.values
         )[1]
-    elif category_name_col in labels.columns:
+    elif name_attribute in labels.columns:
         indices = np.where(
-            labels[category_name_col].values.reshape(-1, 1) == category_pd.name.values
+            labels[name_attribute].values.reshape(-1, 1) == category_pd.name.values
         )[1]
     else:
         raise AttributeError("At least one category attribute must be present")
