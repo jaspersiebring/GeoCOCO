@@ -96,7 +96,7 @@ def test_save_dataset_full(
             src=raster_source,
             labels=overlapping_labels,
             window_bounds=[(256, 256)],
-            id_attribute="category_id"
+            id_attribute="category_id",
         )
 
     save_dataset(dataset=dataset, json_path=json_path)

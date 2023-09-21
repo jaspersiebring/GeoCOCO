@@ -85,7 +85,7 @@ def test_labels_to_dataset_append_dataset(
             src=raster_source,
             labels=overlapping_labels,
             window_bounds=[(256, 256)],
-            id_attribute=id_attribute
+            id_attribute=id_attribute,
         )
 
         # Checking whether new data was added without touching existing data

@@ -21,6 +21,7 @@ from geococo.utils import (
     mask_label,
     validate_labels,
     update_labels,
+    get_date_created
 )
 
 
@@ -85,6 +86,7 @@ def append_dataset(
 
     # Setting nodata and estimating window configuration
     parent_window = window_intersect(input_raster=src, input_vector=labels)
+    date_created = get_date_created(raster_source=src)
     nodata_value = src.nodata if src.nodata else 0
     coco_profile = src.profile.copy()
     coco_profile.update({"dtype": np.uint8, "nodata": nodata_value, "driver": "JPEG"})
@@ -92,7 +94,7 @@ def append_dataset(
     n_windows = generate_window_offsets(window=parent_window, schema=schema).shape[0]
 
     # sets dataset.next_source_id and bump either minor or patch version
-    dataset.add_source(source_path=pathlib.Path(src.name))
+    dataset.add_source(source_path=pathlib.Path(src.name), date_captured=date_created)
 
     # bumps major version if images_dir was not used in this dataset before
     dataset.verify_used_dir(images_dir=images_dir)
@@ -155,6 +157,7 @@ def append_dataset(
             height=window_image.shape[2],
             file_name=window_image_path,
             source_id=dataset.next_source_id,
+            date_captured=date_created
         )
 
         # Iteratively add Annotation models to dataset (also bumps next_annotation_id)
