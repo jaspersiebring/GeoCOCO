@@ -1,4 +1,8 @@
 from typing import Generator, List, Tuple, Union, Optional
+from datetime import datetime
+from dateutil import parser
+from dateutil.parser import ParserError
+import pathlib
 import geopandas as gpd
 import numpy as np
 import pandera as pa
@@ -10,7 +14,7 @@ from rasterio.errors import WindowError
 from rasterio.mask import mask as riomask
 from shapely.geometry import MultiPolygon, Polygon, box
 from geococo.window_schema import WindowSchema
-from geopandas.array import GeometryDtype # type: ignore
+from geopandas.array import GeometryDtype  # type: ignore
 from geococo.coco_models import Category
 
 
@@ -320,3 +324,42 @@ def update_labels(
     labels["supercategory"] = category_pd.iloc[indices].supercategory.values
 
     return labels
+
+
+def get_date_created(raster_source: DatasetReader) -> datetime:
+    """
+    Get the creation date of the input image, represented as a datetime object.
+    If no such information is available in the image's metadata, we return the date
+    the file itself was last modified.
+
+    :param raster_source: reader for input image
+    :return: datetime object representing date_created
+    """
+
+    # all tags representing datetime info and their format
+    datetime_tags = {"TIFFTAG_DATETIME": "%Y-%m-%d %H:%M:%S"}
+
+    date_created = None
+    for datetime_tag, datetime_format in datetime_tags.items():
+        try:
+            timestamp = raster_source.tags()[datetime_tag]
+            date_created = datetime.strptime(timestamp, datetime_format)
+            break  # exit loop when valid datetime is found
+        except ValueError:
+            # datetime_tag in raster_source.tags() but does not match datetime_format
+            try:
+                date_created = parser.parse(timestamp)
+                break  # exit loop when valid datetime is found
+            except ParserError:
+                # datetimestamp could not be parsed
+                continue
+        except KeyError:
+            # datetime_tag not in raster_source.tags()
+            continue
+
+    # if no valid datetime objects could be parsed, we just get last_modified as date
+    if not date_created:
+        timestamp = pathlib.Path(raster_source.name).stat().st_ctime
+        date_created = datetime.fromtimestamp(timestamp)
+
+    return date_created

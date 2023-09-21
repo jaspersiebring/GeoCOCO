@@ -1,4 +1,5 @@
 import pytest
+from datetime import datetime
 import pathlib
 import rasterio
 import numpy as np
@@ -15,6 +16,7 @@ from geococo.utils import (
     mask_label,
     validate_labels,
     update_labels,
+    get_date_created,
 )
 from geococo.coco_models import Category
 from geococo.window_schema import WindowSchema
@@ -348,9 +350,7 @@ def test_validate_labels_only_names(overlapping_labels: gpd.GeoDataFrame):
     category_names = np.random.choice(list(ascii_lowercase), labels.index.size)
     category_name_col = "category_names"
     labels[category_name_col] = category_names
-    validated_labels = validate_labels(
-        labels=labels, name_attribute=category_name_col
-    )
+    validated_labels = validate_labels(labels=labels, name_attribute=category_name_col)
 
     assert validated_labels.shape == labels.shape
     assert np.all(validated_labels == labels)
@@ -579,3 +579,27 @@ def test_update_labels_faulty(overlapping_labels):
             id_attribute=category_id_col,
             name_attribute=category_name_col,
         )
+
+
+def test_get_date_created(test_raster: pathlib.Path) -> None:
+    # no tags, only last_modified
+    with rasterio.open(test_raster) as raster_source:
+        date_created = get_date_created(raster_source=raster_source)
+        # Get the current datetime with a small tolerance window
+        assert np.isclose(date_created.timestamp(), datetime.now().timestamp(), atol=5)
+
+    # tags with parsing (i.e. format mismatch)
+    with rasterio.open(test_raster) as raster_source:
+        date_string = "2023-09-21T00:50:10.131719"
+        mock_tags = {"TIFFTAG_DATETIME": date_string}
+        raster_source.tags = lambda: mock_tags
+        date_created = get_date_created(raster_source=raster_source)
+        assert datetime(2023, 9, 21, 0, 50, 10, 131719) == date_created
+
+    # tags without parsing (matching format)
+    with rasterio.open(test_raster) as raster_source:
+        date_string = "2022-03-12 13:45:00"  # YYYY:MM:DD
+        mock_tags = {"TIFFTAG_DATETIME": date_string}
+        raster_source.tags = lambda: mock_tags
+        date_created = get_date_created(raster_source=raster_source)
+        assert datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S") == date_created
