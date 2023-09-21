@@ -74,7 +74,7 @@ def test_dataset_add_images():
             height=512,
             file_name=pathlib.Path("image.png"),
             source_id=1,
-            date_captured=datetime.now()
+            date_captured=datetime.now(),
         )
         dataset.add_image(image=img)
 
@@ -96,7 +96,14 @@ def test_info():
 def test_image():
     """Simple instance test."""
 
-    Image(id=1, width=512, height=512, file_name=pathlib.Path("image.png"), source_id=1, date_captured=datetime.now())
+    Image(
+        id=1,
+        width=512,
+        height=512,
+        file_name=pathlib.Path("image.png"),
+        source_id=1,
+        date_captured=datetime.now(),
+    )
 
 
 def test_annotation():
