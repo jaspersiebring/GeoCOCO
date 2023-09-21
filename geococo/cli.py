@@ -1,83 +1,190 @@
-from typing import Optional
-import typer_cloup as typer
+import typer
 import pathlib
 from datetime import datetime
 import geopandas as gpd
 import rasterio
-from geococo.coco_processing import labels_to_dataset
+from geococo.coco_processing import append_dataset
 from geococo.coco_manager import save_dataset, load_dataset, create_dataset
+from typing_extensions import Annotated
+from typing import Optional
+
+app = typer.Typer(
+    add_completion=False, help="Transform your GIS annotations into COCO datasets."
+)
 
 
-def build_coco(
-    image_path: pathlib.Path,
-    labels_path: pathlib.Path,
-    json_path: pathlib.Path,
-    output_dir: pathlib.Path,
-    width: int,
-    height: int,
-    category_id_col: Optional[str] = "category_id",
-    category_name_col: Optional[str] = None,
-    supercategory_col: Optional[str] = None,
+@app.command()
+def new(
+    json_path: Annotated[
+        pathlib.Path,
+        typer.Argument(
+            help="Output path for new CocoDataset",
+            exists=False,
+            file_okay=True,
+            writable=True,
+            resolve_path=True,
+        ),
+    ]
 ) -> None:
-    """Transform your GIS annotations into a COCO dataset.
+    """Initialize a new CocoDataset with user-prompted metadata"""
+
+    print("Creating new dataset..")
+    description = input("Dataset description: ")
+    contributor = input("Dataset contributor: ")
+
+    dataset = create_dataset(
+        description=description,
+        contributor=contributor,
+    )
+
+    # Encode CocoDataset instance as JSON and save to json_path
+    save_dataset(dataset=dataset, json_path=json_path)
+    print(f"Created new CocoDataset as {json_path}")
+
+
+@app.command()
+def copy(
+    source_json: Annotated[
+        pathlib.Path,
+        typer.Argument(
+            help="Path to source CocoDataset",
+            exists=True,
+            readable=True,
+            resolve_path=True,
+        ),
+    ],
+    dest_json: Annotated[
+        pathlib.Path,
+        typer.Argument(
+            help="Output path for copied CocoDataset",
+            exists=True,
+            readable=True,
+            resolve_path=True,
+        ),
+    ],
+    update_meta: Annotated[
+        bool,
+        typer.Option(help="Whether to prompt the user for new metadata"),
+    ] = True,
+) -> None:
+    """Copy and (optionally) update the metadata of an existing CocoDataset"""
+
+    # Loading CocoDataset model from json_path
+    dataset = load_dataset(json_path=source_json)
+
+    if update_meta:
+        print("Updating metadata..")
+        dataset.info.version = (
+            input(f"Dataset version ({dataset.info.version}): ") or dataset.info.version
+        )
+        dataset.info.description = input(
+            f"Dataset description ({dataset.info.description}): "
+            or dataset.info.description
+        )
+        dataset.info.contributor = input(
+            f"Dataset contributor ({dataset.info.contributor}): "
+            or dataset.info.contributor
+        )
+        dataset.info.date_created = datetime.now()
+        print(f"Dataset date: {dataset.info.date_created}")
+        dataset.info.year = dataset.info.date_created.year
+
+    # Encode CocoDataset instance as JSON and save to json_path
+    save_dataset(dataset=dataset, json_path=dest_json)
+    print(f"Copied CocoDataset to {dest_json}")
+
+
+@app.command()
+def add(
+    image_path: Annotated[
+        pathlib.Path,
+        typer.Argument(
+            help="Path to geospatial image containing image objects",
+            exists=True,
+            readable=True,
+            resolve_path=True,
+        ),
+    ],
+    labels_path: Annotated[
+        pathlib.Path,
+        typer.Argument(
+            help="Path to vector file containing annotated image objects",
+            exists=True,
+            readable=True,
+            resolve_path=True,
+        ),
+    ],
+    json_path: Annotated[
+        pathlib.Path,
+        typer.Argument(
+            help="Path to json file containing the COCO dataset",
+            exists=True,
+            readable=True,
+            resolve_path=True,
+        ),
+    ],
+    output_dir: Annotated[
+        pathlib.Path,
+        typer.Argument(
+            help="Path to output directory for image subsets",
+            exists=True,
+            readable=True,
+            resolve_path=True,
+        ),
+    ],
+    width: Annotated[int, typer.Argument(help="Width of image subsets")],
+    height: Annotated[int, typer.Argument(help="Height of image subsets")],
+    id_attribute: Annotated[
+        Optional[str],
+        typer.Option(
+            help="Name of column containing category_id values "
+            "(optional if --name_attribute is given)"
+        ),
+    ] = None,
+    name_attribute: Annotated[
+        Optional[str],
+        typer.Option(
+            help="Name of column containing category_name values "
+            "(optional if --id_attribute is given)"
+        ),
+    ] = None,
+    super_attribute: Annotated[
+        Optional[str],
+        typer.Option(help="Name of column containing supercategory values"),
+    ] = None,
+) -> None:
+    """Transform and add GIS annotations to an existing CocoDataset
 
     This method generates a COCO dataset by moving across the given image (image_path)
     with a moving window (image_size), constantly checking for intersecting annotations
     (labels_path) that represent image objects in said image (e.g. buildings in
-    satellite imagery; denoted by category_attribute). Each valid intersection will add
-    n Annotations entries to the dataset (json_path) and save a subset of the input
-    image that contained these entries (output_dir).
+    satellite imagery; denoted by (super)category name and/or id). Each valid
+    intersection will add n Annotations entries to the dataset (json_path) and save a
+    subset of the input image that contained these entries (output_dir).
 
     The output data size depends on your input labels, as the moving window adjusts its
     step size to accommodate the average annotation size, optimizing dataset
-    representation and minimizing tool configuration.
-
-    :param image_path: Path to the geospatial image containing image objects (e.g.
-        buildings in satellite imagery)
-    :param labels_path: Path to the annotations representing these image objects
-        (='category_id')
-    :param json_path: Path to the json file that will store the COCO dataset (will be
-        appended to if already exists)
-    :param output_dir: Path to the output directory for image subsets
-    :param width: Width of the output images
-    :param height: Height of the output images
-    :param category_id_col: Column containing category_id values
-    :param category_name_col: Column containing category_name values
-    :param supercategory_col: Column containing supercategory values
+    representation and minimizing tool configuration. Each addition will also increment
+    the dataset version: patch if using the same image_path, minor if using a new
+    image_path, and major if using a new output_dir.
     """
 
-    if isinstance(json_path, pathlib.Path) and json_path.exists():
-        # Create and populate instance of CocoDataset from json_path
-        dataset = load_dataset(json_path=json_path)
-    else:
-        # Create instance of CocoDataset from user input
-        print("Creating new dataset..")
-        version = input("Dataset version: ")
-        description = input("Dataset description: ")
-        contributor = input("Dataset contributor: ")
-        date_created = datetime.now()
-        print(f"Dataset date: {date_created}")
-
-        dataset = create_dataset(
-            version=version,
-            description=description,
-            contributor=contributor,
-            date_created=date_created,
-        )
+    # Loading CocoDataset model from json_path
+    dataset = load_dataset(json_path=json_path)
 
     # Loading GIS data
     labels = gpd.read_file(labels_path)
     with rasterio.open(image_path) as src:
-        # Appending Annotation instances and clipping the image part that contains them
-        dataset = labels_to_dataset(
+        # Find and save all Annotation instances
+        dataset = append_dataset(
             dataset=dataset,
             images_dir=output_dir,
             src=src,
             labels=labels,
             window_bounds=[(width, height)],
-            category_id_col=category_id_col,
-            category_name_col=category_name_col,
-            supercategory_col=supercategory_col,
+            id_attribute=id_attribute,
+            name_attribute=name_attribute,
+            super_attribute=super_attribute,
         )
 
     # Encode CocoDataset instance as JSON and save to json_path
@@ -85,4 +192,4 @@ def build_coco(
 
 
 if __name__ == "__main__":
-    typer.run(build_coco)
+    app()

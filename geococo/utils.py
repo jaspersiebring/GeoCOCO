@@ -1,4 +1,8 @@
 from typing import Generator, List, Tuple, Union, Optional
+from datetime import datetime
+from dateutil import parser
+from dateutil.parser import ParserError
+import pathlib
 import geopandas as gpd
 import numpy as np
 import pandera as pa
@@ -10,7 +14,7 @@ from rasterio.errors import WindowError
 from rasterio.mask import mask as riomask
 from shapely.geometry import MultiPolygon, Polygon, box
 from geococo.window_schema import WindowSchema
-from geopandas.array import GeometryDtype # type: ignore
+from geopandas.array import GeometryDtype  # type: ignore
 from geococo.coco_models import Category
 
 
@@ -237,18 +241,18 @@ def estimate_schema(
 
 def validate_labels(
     labels: gpd.GeoDataFrame,
-    category_id_col: Optional[str] = "category_id",
-    category_name_col: Optional[str] = None,
-    supercategory_col: Optional[str] = None,
+    id_attribute: Optional[str] = "category_id",
+    name_attribute: Optional[str] = None,
+    super_attribute: Optional[str] = None,
 ) -> gpd.GeoDataFrame:
     """Validates all necessary attributes for a geococo-viable GeoDataFrame. It also
     checks for the presence of either category_id or category_name values and ensures
     valid geometry.
 
     :param labels: GeoDataFrame containing labels and category attributes
-    :param category_id_col: Column name that holds category_id values
-    :param category_name_col: Column name that holds category_name values
-    :param supercategory_col: Column name that holds supercategory values
+    :param id_attribute: Column name that holds category_id values
+    :param name_attribute: Column name that holds category_name values
+    :param super_attribute: Column name that holds supercategory values
     :return: Validated GeoDataFrame with coerced dtypes
     """
 
@@ -258,17 +262,17 @@ def validate_labels(
             pa.Check(lambda geoms: geoms.is_valid, error="Invalid geometry found"),
             nullable=False,
         ),
-        category_id_col: pa.Column(
+        id_attribute: pa.Column(
             int, pa.Check.greater_than(0), required=False, nullable=False, coerce=True
         ),
-        category_name_col: pa.Column(str, required=False, nullable=False),
-        supercategory_col: pa.Column(str, required=False, nullable=False),
+        name_attribute: pa.Column(str, required=False, nullable=False),
+        super_attribute: pa.Column(str, required=False, nullable=False),
     }
 
     schema = pa.DataFrameSchema(schema_dict)
     validated_labels = schema.validate(labels)
 
-    req_cols = np.array([category_id_col, category_name_col])
+    req_cols = np.array([id_attribute, name_attribute])
     if not np.isin(req_cols, validated_labels.columns).any():
         raise AttributeError("At least one category attribute must be present")
 
@@ -278,8 +282,8 @@ def validate_labels(
 def update_labels(
     labels: gpd.GeoDataFrame,
     categories: List[Category],
-    category_id_col: Optional[str] = "category_id",
-    category_name_col: Optional[str] = None,
+    id_attribute: Optional[str] = "category_id",
+    name_attribute: Optional[str] = None,
 ) -> gpd.GeoDataFrame:
     """Updates labels with validated (super)category names and ids from given Category
     instances (i.e. source of truth created from current and previous labels). This
@@ -290,8 +294,8 @@ def update_labels(
         validate_labels)
     :param categories: list of Category instances created from current and previous
         labels
-    :param category_id_col: Column name that holds category_id values
-    :param category_name_col: Column name that holds category_name values
+    :param id_attribute: Column name that holds category_id values
+    :param name_attribute: Column name that holds category_name values
     :return: labels with name, id and supercategory attributes from all given Category
         instances
     """
@@ -303,13 +307,13 @@ def update_labels(
     )
 
     # Finding indices for matching values of a given attribute (name or id)
-    if category_id_col in labels.columns:
+    if id_attribute in labels.columns:
         indices = np.where(
-            labels[category_id_col].values.reshape(-1, 1) == category_pd.id.values
+            labels[id_attribute].values.reshape(-1, 1) == category_pd.id.values
         )[1]
-    elif category_name_col in labels.columns:
+    elif name_attribute in labels.columns:
         indices = np.where(
-            labels[category_name_col].values.reshape(-1, 1) == category_pd.name.values
+            labels[name_attribute].values.reshape(-1, 1) == category_pd.name.values
         )[1]
     else:
         raise AttributeError("At least one category attribute must be present")
@@ -320,3 +324,42 @@ def update_labels(
     labels["supercategory"] = category_pd.iloc[indices].supercategory.values
 
     return labels
+
+
+def get_date_created(raster_source: DatasetReader) -> datetime:
+    """
+    Get the creation date of the input image, represented as a datetime object.
+    If no such information is available in the image's metadata, we return the date
+    the file itself was last modified.
+
+    :param raster_source: reader for input image
+    :return: datetime object representing date_created
+    """
+
+    # all tags representing datetime info and their format
+    datetime_tags = {"TIFFTAG_DATETIME": "%Y-%m-%d %H:%M:%S"}
+
+    date_created = None
+    for datetime_tag, datetime_format in datetime_tags.items():
+        try:
+            timestamp = raster_source.tags()[datetime_tag]
+            date_created = datetime.strptime(timestamp, datetime_format)
+            break  # exit loop when valid datetime is found
+        except ValueError:
+            # datetime_tag in raster_source.tags() but does not match datetime_format
+            try:
+                date_created = parser.parse(timestamp)
+                break  # exit loop when valid datetime is found
+            except ParserError:
+                # datetimestamp could not be parsed
+                continue
+        except KeyError:
+            # datetime_tag not in raster_source.tags()
+            continue
+
+    # if no valid datetime objects could be parsed, we just get last_modified as date
+    if not date_created:
+        timestamp = pathlib.Path(raster_source.name).stat().st_ctime
+        date_created = datetime.fromtimestamp(timestamp)
+
+    return date_created

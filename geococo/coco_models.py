@@ -36,14 +36,18 @@ class CocoDataset(BaseModel):
         self.images.append(image)
         self.next_image_id += 1
 
-    def add_source(self, source_path: pathlib.Path) -> None:
+    def add_source(self, source_path: pathlib.Path, date_captured: datetime) -> None:
         sources = [ssrc for ssrc in self.sources if ssrc.file_name == source_path]
         if sources:
             assert len(sources) == 1
             source = sources[0]
             self.bump_version(bump_method="patch")
         else:
-            source = Source(id=len(self.sources) + 1, file_name=source_path)
+            source = Source(
+                id=len(self.sources) + 1,
+                file_name=source_path,
+                date_captured=date_captured,
+            )
             self.sources.append(source)
             self.bump_version(bump_method="minor")
 
@@ -94,9 +98,8 @@ class CocoDataset(BaseModel):
         # creating default supercategory_names if not given
         if super_names is None:
             super_names = np.full(
-                shape=new_shape,
-                fill_value=super_default
-                ) # type: ignore[assignment]
+                shape=new_shape, fill_value=super_default
+            )  # type: ignore[assignment]
         else:
             super_names: np.ndarray = super_names.to_numpy()
             assert super_names.shape == original_shape
@@ -112,7 +115,7 @@ class CocoDataset(BaseModel):
             max_id = category_pd.loc[pandas_mask, "id"].max()
             start = np.nansum([max_id, 1])
             end = start + new_members.size
-            category_ids = np.arange(start, end) # type: ignore[assignment]
+            category_ids = np.arange(start, end)  # type: ignore[assignment]
             category_names = new_members
         # ensuring equal size for category names and ids (if given)
         else:
@@ -141,7 +144,7 @@ class CocoDataset(BaseModel):
 
         self.info.version = str(version)
 
-    def verify_new_output_dir(self, images_dir: pathlib.Path) -> None:
+    def verify_used_dir(self, images_dir: pathlib.Path) -> None:
         output_dirs = np.unique([image.file_name.parent for image in self.images])
         if images_dir not in output_dirs:
             self.bump_version(bump_method="major")
@@ -161,6 +164,7 @@ class Image(BaseModel):
     height: int
     file_name: pathlib.Path
     source_id: int
+    date_captured: datetime
 
 
 class Annotation(BaseModel):
@@ -187,6 +191,7 @@ class RleDict(TypedDict):
 class Source(BaseModel):
     id: int
     file_name: pathlib.Path
+    date_captured: datetime
 
 
 # Call update_forward_refs() to resolve forward references (for pydantic <2.0.0)

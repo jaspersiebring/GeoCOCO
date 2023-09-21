@@ -3,7 +3,7 @@ import geopandas as gpd
 from datetime import datetime
 import rasterio
 import pathlib
-from geococo.coco_processing import labels_to_dataset
+from geococo.coco_processing import append_dataset
 from geococo.coco_models import Info, CocoDataset
 from geococo.coco_manager import load_dataset, create_dataset, save_dataset
 
@@ -19,13 +19,13 @@ def test_load_dataset_full(
         # Creating empty CocoDataset as input for labels_to_dataset
         info = Info(version="0.0.1", date_created=datetime.now())
         dataset = CocoDataset(info=info)
-        dataset = labels_to_dataset(
+        dataset = append_dataset(
             dataset=dataset,
             images_dir=tmp_path,
             src=raster_source,
             labels=overlapping_labels,
             window_bounds=[(256, 256)],
-            category_id_col="category_id",
+            id_attribute="category_id",
         )
 
     json_data = dataset.json()
@@ -90,12 +90,13 @@ def test_save_dataset_full(
         # Creating empty CocoDataset as input for labels_to_dataset
         info = Info(version="0.0.1", date_created=datetime.now())
         dataset = CocoDataset(info=info)
-        dataset = labels_to_dataset(
+        dataset = append_dataset(
             dataset=dataset,
             images_dir=tmp_path,
             src=raster_source,
             labels=overlapping_labels,
             window_bounds=[(256, 256)],
+            id_attribute="category_id",
         )
 
     save_dataset(dataset=dataset, json_path=json_path)

@@ -3,7 +3,7 @@ import geopandas as gpd
 import rasterio
 import numpy as np
 from datetime import datetime
-from geococo.coco_processing import labels_to_dataset
+from geococo.coco_processing import append_dataset
 from geococo.coco_models import CocoDataset, Info
 
 
@@ -19,13 +19,13 @@ def test_labels_to_dataset_new_dataset(
         # Creating empty CocoDataset as input for labels_to_dataset
         info = Info(version="0.0.1", date_created=datetime.now())
         dataset = CocoDataset(info=info)
-        dataset = labels_to_dataset(
+        dataset = append_dataset(
             dataset=dataset,
             images_dir=tmp_path,
             src=raster_source,
             labels=overlapping_labels,
             window_bounds=[(256, 256)],
-            category_name_col=category_attribute,
+            name_attribute=category_attribute,
         )
 
         # Checking if output has correct classes
@@ -52,36 +52,40 @@ def test_labels_to_dataset_append_dataset(
     test_raster: pathlib.Path,
     overlapping_labels: gpd.GeoDataFrame,
 ) -> None:
-    category_attribute = "category_id"
+    id_attribute = "category_id"
+
     with rasterio.open(test_raster) as raster_source:
         # Creating empty CocoDataset as input for labels_to_dataset
         info = Info(version="0.0.1", date_created=datetime.now())
         dataset = CocoDataset(info=info)
-        dataset = labels_to_dataset(
+        dataset = append_dataset(
             dataset=dataset,
             images_dir=tmp_path,
             src=raster_source,
             labels=overlapping_labels,
             window_bounds=[(256, 256)],
-            category_id_col=category_attribute,
+            id_attribute=id_attribute,
         )
 
         # Checking if output has correct classes
         dataset_class_names = np.array([cat.name for cat in dataset.categories])
-        labels_class_names = overlapping_labels[category_attribute].unique().astype(str)
-        assert np.all(np.isin(dataset_class_names, labels_class_names))
+        dataset_class_ids = np.array([cat.id for cat in dataset.categories])
+        labels_class_ids = overlapping_labels[id_attribute].unique()
+        assert np.all(np.isin(dataset_class_ids, labels_class_ids))
+        assert np.all(np.isin(dataset_class_names, labels_class_ids.astype(str)))
 
         # Rerunning with existing CocoDataset to verify append
         previous_dataset = dataset.copy(deep=True)
         previous_image_id = dataset.next_image_id - 1
         previous_annotation_id = dataset.next_annotation_id - 1
 
-        dataset = labels_to_dataset(
+        dataset = append_dataset(
             dataset=dataset,
             images_dir=tmp_path,
             src=raster_source,
             labels=overlapping_labels,
             window_bounds=[(256, 256)],
+            id_attribute=id_attribute,
         )
 
         # Checking whether new data was added without touching existing data
@@ -115,14 +119,14 @@ def test_labels_to_dataset_append_with_new_categories(
         # Creating empty CocoDataset as input for labels_to_dataset
         info = Info(version="0.0.1", date_created=datetime.now())
         dataset = CocoDataset(info=info)
-        dataset = labels_to_dataset(
+        dataset = append_dataset(
             dataset=dataset,
             images_dir=tmp_path,
             src=raster_source,
             labels=overlapping_labels,
             window_bounds=[(256, 256)],
-            category_id_col=id_attribute,
-            category_name_col=name_attribute,
+            id_attribute=id_attribute,
+            name_attribute=name_attribute,
         )
 
         # Checking if output has correct classes
@@ -142,14 +146,14 @@ def test_labels_to_dataset_append_with_new_categories(
         overlapping_labels.loc[2, "category_id"] = 6
         overlapping_labels.loc[2, "class_names"] = "Six"
 
-        dataset = labels_to_dataset(
+        dataset = append_dataset(
             dataset=dataset,
             images_dir=tmp_path,
             src=raster_source,
             labels=overlapping_labels,
             window_bounds=[(256, 256)],
-            category_id_col=id_attribute,
-            category_name_col=name_attribute,
+            id_attribute=id_attribute,
+            name_attribute=name_attribute,
         )
 
         # Checking whether new data was added without touching existing data

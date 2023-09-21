@@ -74,6 +74,7 @@ def test_dataset_add_images():
             height=512,
             file_name=pathlib.Path("image.png"),
             source_id=1,
+            date_captured=datetime.now(),
         )
         dataset.add_image(image=img)
 
@@ -95,7 +96,14 @@ def test_info():
 def test_image():
     """Simple instance test."""
 
-    Image(id=1, width=512, height=512, file_name=pathlib.Path("image.png"), source_id=1)
+    Image(
+        id=1,
+        width=512,
+        height=512,
+        file_name=pathlib.Path("image.png"),
+        source_id=1,
+        date_captured=datetime.now(),
+    )
 
 
 def test_annotation():
@@ -131,7 +139,7 @@ def test_segmentation():
 def test_source():
     """Simple instance test."""
 
-    Source(file_name=pathlib.Path(), id=1)
+    Source(file_name=pathlib.Path(), id=1, date_captured=datetime.now())
 
 
 def test_dataset_add_sources():
@@ -140,12 +148,13 @@ def test_dataset_add_sources():
     # Bit different from the other ids since we check for duplication
     # and only increment if new
     dataset = CocoDataset(info=Info())
+    date_captured = datetime.now()
     assert dataset.next_source_id == 0
-    dataset.add_source(source_path=pathlib.Path("a"))
+    dataset.add_source(source_path=pathlib.Path("a"), date_captured=date_captured)
     assert dataset.next_source_id == 1
-    dataset.add_source(source_path=pathlib.Path("a"))
+    dataset.add_source(source_path=pathlib.Path("a"), date_captured=date_captured)
     assert dataset.next_source_id == 1
-    dataset.add_source(source_path=pathlib.Path("b"))
+    dataset.add_source(source_path=pathlib.Path("b"), date_captured=date_captured)
     assert dataset.next_source_id == 2
 
 
@@ -153,18 +162,19 @@ def test_dataset_versions():
     """Checks proper incrementation of dataset versions."""
 
     dataset = CocoDataset(info=Info())
+    date_captured = datetime.now()
     assert dataset.info.version == "0.0.0"
 
     # minor bump if same output_dir but different raster_source
-    dataset.add_source(source_path=pathlib.Path("a"))
+    dataset.add_source(source_path=pathlib.Path("a"), date_captured=date_captured)
     assert dataset.info.version == "0.1.0"
 
     # patch bump: if same output_dir and same raster_source
-    dataset.add_source(source_path=pathlib.Path("a"))
+    dataset.add_source(source_path=pathlib.Path("a"), date_captured=date_captured)
     assert dataset.info.version == "0.1.1"
 
     # major bump: if new output_dir
-    dataset.verify_new_output_dir(images_dir=pathlib.Path("b"))
+    dataset.verify_used_dir(images_dir=pathlib.Path("b"))
     assert dataset.info.version == "1.0.0"
 
 
