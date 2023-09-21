@@ -30,7 +30,7 @@ def append_dataset(
     src: DatasetReader,
     window_bounds: List[Tuple[int, int]],
     labels: gpd.GeoDataFrame,
-    id_attribute: Optional[str] = "category_id",
+    id_attribute: Optional[str] = None,
     name_attribute: Optional[str] = None,
     super_attribute: Optional[str] = None,
 ) -> CocoDataset:

@@ -67,10 +67,7 @@ def copy(
         typer.Option(help="Whether to prompt the user for new metadata"),
     ] = True,
 ) -> None:
-    """Copy and (optionally) update the metadata of an existing CocoDataset 
-    
-    Copies a CocoDataset from source_path, prompts user for new metadata (optional)
-    and saves it to dest_path."""
+    """Copy and (optionally) update the metadata of an existing CocoDataset"""
 
     # Loading CocoDataset model from json_path
     dataset = load_dataset(json_path=source_json)

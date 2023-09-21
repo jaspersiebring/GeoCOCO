@@ -52,7 +52,8 @@ def test_labels_to_dataset_append_dataset(
     test_raster: pathlib.Path,
     overlapping_labels: gpd.GeoDataFrame,
 ) -> None:
-    category_attribute = "category_id"
+    id_attribute = "category_id"
+
     with rasterio.open(test_raster) as raster_source:
         # Creating empty CocoDataset as input for labels_to_dataset
         info = Info(version="0.0.1", date_created=datetime.now())
@@ -63,13 +64,15 @@ def test_labels_to_dataset_append_dataset(
             src=raster_source,
             labels=overlapping_labels,
             window_bounds=[(256, 256)],
-            id_attribute=category_attribute,
+            id_attribute=id_attribute,
         )
 
         # Checking if output has correct classes
         dataset_class_names = np.array([cat.name for cat in dataset.categories])
-        labels_class_names = overlapping_labels[category_attribute].unique().astype(str)
-        assert np.all(np.isin(dataset_class_names, labels_class_names))
+        dataset_class_ids = np.array([cat.id for cat in dataset.categories])
+        labels_class_ids = overlapping_labels[id_attribute].unique()
+        assert np.all(np.isin(dataset_class_ids, labels_class_ids))
+        assert np.all(np.isin(dataset_class_names, labels_class_ids.astype(str)))
 
         # Rerunning with existing CocoDataset to verify append
         previous_dataset = dataset.copy(deep=True)
@@ -82,6 +85,7 @@ def test_labels_to_dataset_append_dataset(
             src=raster_source,
             labels=overlapping_labels,
             window_bounds=[(256, 256)],
+            id_attribute=id_attribute
         )
 
         # Checking whether new data was added without touching existing data

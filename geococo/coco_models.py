@@ -160,7 +160,7 @@ class Image(BaseModel):
     width: int
     height: int
     file_name: pathlib.Path
-    source_id: int
+    source_id: int  
 
 
 class Annotation(BaseModel):
@@ -187,6 +187,7 @@ class RleDict(TypedDict):
 class Source(BaseModel):
     id: int
     file_name: pathlib.Path
+    date_captured: Optional[datetime] = None
 
 
 # Call update_forward_refs() to resolve forward references (for pydantic <2.0.0)
