@@ -1,0 +1,61 @@
+site_name: "GeoCOCO: Transform your GIS annotations into COCO datasets" 
+site_description: Transform your GIS annotations into COCO datasets
+site_url: https://jaspersiebring.github.io/geococo/
+repo_url: https://github.com/jaspersiebring/geococo
+repo_name: jaspersiebring/geococo
+
+nav:
+- Quickstart: index.md
+- API Documentation:
+  - COCO Models: models.md
+  - COCO Processing: processing.md
+  - Typer CLI: cli.md
+  - Utilities: utils.md
+- References:
+  - License: https://github.com/jaspersiebring/GeoCOCO/blob/main/LICENSE
+
+theme: 
+  name: material
+  favicon: img/favicon.ico
+  logo: img/favicon.ico
+  palette:
+  - media: "(prefers-color-scheme: light)"
+    scheme: default
+    primary: light green
+    accent: light green
+    toggle:
+      icon: material/lightbulb-outline
+      name: "Switch to dark mode"
+  - media: "(prefers-color-scheme: dark)"
+    scheme: slate
+    primary: light green
+    accent: light green
+    toggle:
+      icon: material/lightbulb
+      name: "Switch to light mode"
+  highlightjs: true
+  locale: en
+  features:
+    - content.code.annotate
+    - content.code.copy
+    - navigation.instant
+    - navigation.tracking
+    - navigation.sections
+    - navigation.top
+    - navigation.indexes
+    - toc.follow
+
+plugins:
+  - search
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          import:
+          - url: https://docs.python-requests.org/en/master/objects.inv
+            domains: [std, py]
+          options:
+            docstring_style: sphinx
+            docstring_section_style: table
+            summary: true
+            separate_signature: true
