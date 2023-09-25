@@ -1,6 +1,6 @@
 site_name: "GeoCOCO: Transform your GIS annotations into COCO datasets" 
 site_description: Transform your GIS annotations into COCO datasets
-site_url: https://example.com
+site_url: https://jaspersiebring.github.io/geococo/
 repo_url: https://github.com/jaspersiebring/geococo
 repo_name: jaspersiebring/geococo
 
