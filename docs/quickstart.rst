@@ -1,4 +1,4 @@
 GeoCOCO: Transform your GIS annotations into COCO datasets
 ============================================================
-.. include:: ../readme.md
+.. include:: ../README.md
    :parser: myst_parser.sphinx_
