@@ -124,8 +124,8 @@ class CocoDataset(BaseModel):
             category_ids = new_members
 
         # iteratively instancing and appending Category from set ids, names and supers
-        cip = zip(category_ids, category_names, super_names)
-        for cid, name, super in cip:
+        category_info = zip(category_ids, category_names, super_names)
+        for cid, name, super in category_info:
             category = Category(id=cid, name=name, supercategory=super)
             self.categories.append(category)
 
