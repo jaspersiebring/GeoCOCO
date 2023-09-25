@@ -3,8 +3,6 @@ site_description: Transform your GIS annotations into COCO datasets
 site_url: https://example.com
 repo_url: https://github.com/jaspersiebring/geococo
 repo_name: jaspersiebring/geococo
-docs_dir: docs
-site_dir: site
 
 nav:
 - Quickstart: index.md
@@ -14,6 +12,7 @@ nav:
 - API Documentation:
   - COCO Models: models.md
   - COCO Processing: processing.md
+  - Typer CLI: cli.md
   - Utilities: utils.md  
 - References:
   - License: https://github.com/jaspersiebring/GeoCOCO/blob/main/LICENSE
@@ -52,14 +51,20 @@ theme:
     - navigation.indexes
     - toc.follow
 
-
-
 plugins:
   - search
   - mkdocstrings:
       default_handler: python
       handlers:
         python:
+          import:
+          - url: https://docs.python-requests.org/en/master/objects.inv
+            domains: [std, py]
           options:
             docstring_style: sphinx
-            docstring_section_style: list
+            docstring_section_style: table
+            members_order: source
+            summary: true
+            separate_signature: true
+              
+            

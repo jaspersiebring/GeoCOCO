@@ -1,7 +1,13 @@
-::: geococo.coco_models.CocoDataset
-::: geococo.coco_models.Info
-::: geococo.coco_models.Image
-::: geococo.coco_models.Annotation
-::: geococo.coco_models.Category
-::: geococo.coco_models.RleDict
-::: geococo.coco_models.Source
+::: geococo.coco_models
+    options:
+      members:
+        - Info
+        - Image
+        - Annotation
+        - Category
+        - RleDict
+        - Source
+        - CocoDataset
+      show_root_heading: false
+      merge_init_into_class: false
+      show_if_no_docstring: false
