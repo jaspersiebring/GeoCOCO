@@ -15,6 +15,9 @@ build:
       # Install dependencies with 'docs' dependency group
       # https://python-poetry.org/docs/managing-dependencies/#dependency-groups
       - poetry install --with dev
+    pre_build:
+      # Generating full API spec for geococo
+     - sphinx-apidoc -o docs/ geococo/
 
 sphinx:
   configuration: docs/conf.py
