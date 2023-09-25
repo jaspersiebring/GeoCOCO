@@ -3,6 +3,7 @@
 [![PyPI](https://img.shields.io/pypi/v/geococo)](https://pypi.org/project/geococo/)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/geococo)
 [![Build passing](https://github.com/jaspersiebring/GeoCOCO/actions/workflows/main.yml/badge.svg)](https://github.com/jaspersiebring/GeoCOCO/actions/workflows/main.yml)
+[![Documentation Status](https://readthedocs.org/projects/geococo/badge/?version=latest)](https://geococo.readthedocs.io/en/latest/?badge=latest)
 
 Easily transform your GIS annotations into [Microsoft's Common Objects In Context (COCO)](https://cocodataset.org/#format-data) datasets with GeoCOCO. This tool allows users to leverage the advanced digitizing solutions of modern GIS software for the annotations of image objects in geographic imagery.
  
