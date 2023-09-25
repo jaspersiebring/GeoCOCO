@@ -13,7 +13,7 @@ nav:
   - COCO Models: models.md
   - COCO Processing: processing.md
   - Typer CLI: cli.md
-  - Utilities: utils.md  
+  - Utilities: utils.md
 - References:
   - License: https://github.com/jaspersiebring/GeoCOCO/blob/main/LICENSE
 
@@ -36,17 +36,14 @@ theme:
     toggle:
       icon: material/lightbulb
       name: "Switch to light mode"
-
   highlightjs: true
   locale: en
   features:
     - content.code.annotate
     - content.code.copy
     - navigation.instant
-    - navigation.expand
     - navigation.tracking
     - navigation.sections
-    - navigation.path
     - navigation.top
     - navigation.indexes
     - toc.follow
@@ -63,8 +60,5 @@ plugins:
           options:
             docstring_style: sphinx
             docstring_section_style: table
-            members_order: source
             summary: true
             separate_signature: true
-              
-            
