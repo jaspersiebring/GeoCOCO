@@ -6,9 +6,6 @@ repo_name: jaspersiebring/geococo
 
 nav:
 - Quickstart: index.md
-- Examples:
-    - Fiftyone: fiftyone.md
-    - Leafmap: leafmap.md
 - API Documentation:
   - COCO Models: models.md
   - COCO Processing: processing.md
