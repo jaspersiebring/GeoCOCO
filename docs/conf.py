@@ -13,14 +13,16 @@ sys.path.insert(0, os.path.abspath('..'))
 project = 'geococo'
 copyright = '2023, Jasper Siebring'
 author = 'Jasper Siebring'
-release = '0.5.0'
+release = '0.5.2'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 extensions = [
     'sphinx.ext.autodoc',
-    'sphinx.ext.viewcode'
+    'sphinx.ext.viewcode',
+    'sphinx.ext.autosummary',
+    'myst_parser'
 ]
 
 templates_path = ['_templates']

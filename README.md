@@ -1,5 +1,5 @@
 ![geococo logo](https://github.com/jaspersiebring/GeoCOCO/assets/25051531/b2a2db16-1400-4c43-b044-a924a378ef84)
----
+
 [![PyPI](https://img.shields.io/pypi/v/geococo)](https://pypi.org/project/geococo/)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/geococo)
 [![Build passing](https://github.com/jaspersiebring/GeoCOCO/actions/workflows/main.yml/badge.svg)](https://github.com/jaspersiebring/GeoCOCO/actions/workflows/main.yml)
@@ -8,7 +8,7 @@ Easily transform your GIS annotations into [Microsoft's Common Objects In Contex
  
 Built with `Pydantic` and `pycocotools`, it features a complete implementation of the COCO standard for object detection with out-of-the-box support for JSON-encoding and RLE compression. The resulting datasets are versioned, easily extendable with new annotations and fully compatible with other data applications that accept the COCO format.
 
-# Key features
+## Key features
 - User-friendly: GeoCOCO is designed for ease of use, requiring minimal configuration and domain knowledge
 - Version Control: Datasets created with GeoCOCO are versioned and designed for expansion with future annotations
 - Command-line Tool: Use GeoCOCO from your terminal to create, append and copy COCO datasets
@@ -17,7 +17,7 @@ Built with `Pydantic` and `pycocotools`, it features a complete implementation o
 - COCO Standard: Output datasets are fully compatible with other COCO-accepting applications
 - Compact File Size: JSON-encoding and RLE compression are employed to ensure compact file sizes
 
-# Installation
+## Installation
 Installing from the Python Package Index (PyPI):
 ````
 # Install from PYPI with Python's package installer (pip)

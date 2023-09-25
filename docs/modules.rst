@@ -1,8 +1,7 @@
-GeoCOCO
+geococo
 =======
 
 .. toctree::
    :maxdepth: 4
 
    geococo
-   tests
