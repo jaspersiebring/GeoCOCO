@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "geococo"
-version = "0.5.2"
+version = "0.5.3"
 description = "Converts GIS annotations to Microsoft's Common Objects In Context (COCO) dataset format"
 authors = ["Jasper Siebring <j.siebring92@gmail.com>"]
 readme = "README.md"
