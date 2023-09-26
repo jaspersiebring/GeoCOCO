@@ -5,33 +5,40 @@
 
 import os
 import sys
-sys.path.insert(0, os.path.abspath('..'))
+import toml
+import pathlib
+from datetime import datetime
+
+# Appending project root to PATH
+sys.path.insert(0, os.path.abspath(".."))
+
+# Getting package version from pyproject toml
+meta_path = pathlib.Path(__file__).parents[1] / "pyproject.toml"
+meta_info = toml.load(meta_path)
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = 'geococo'
-copyright = '2023, Jasper Siebring'
-author = 'Jasper Siebring'
-release = '0.5.2'
+project = meta_info["tool"]["poetry"]["name"]
+copyright = f"{datetime.now().year}, Jasper Siebring"
+author = "Jasper Siebring"
+version = release = meta_info["tool"]["poetry"]["version"]
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 extensions = [
-    'sphinx.ext.autodoc',
-    'sphinx.ext.viewcode',
-    'sphinx.ext.autosummary',
-    'myst_parser'
+    "sphinx.ext.autodoc",
+    "sphinx.ext.viewcode",
+    "sphinx.ext.autosummary",
+    "myst_parser",
 ]
 
-templates_path = ['_templates']
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
-
-
+templates_path = ["_templates"]
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = 'sphinx_rtd_theme'
-html_static_path = ['_static']
+html_theme = "sphinx_rtd_theme"
+html_static_path = ["_static"]
