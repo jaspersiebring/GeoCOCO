@@ -4,12 +4,12 @@ version = "0.5.3"
 description = "Converts GIS annotations to Microsoft's Common Objects In Context (COCO) dataset format"
 authors = ["Jasper Siebring <j.siebring92@gmail.com>"]
 readme = "README.md"
+repository = "https://github.com/jaspersiebring/GeoCOCO"
+homepage = "https://jaspersiebring.github.io/GeoCOCO/"
+keywords = ["coco", "annotation", "deep-learning", "gis", "qgis", "arcgis", "labeling", "ai", "yolo"]
 packages = [
     {include = "geococo"}
 ]
-
-[tool.poetry.urls]
-"Repository" = "https://github.com/jaspersiebring/GeoCOCO"
 
 [tool.poetry.scripts]
 geococo = "geococo.cli:app"
