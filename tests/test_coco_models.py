@@ -49,7 +49,7 @@ def test_dataset_add_annotations():
             category_id=1,
             segmentation=segmentation,
             area=10.0,
-            bbox=[1.0, 2.0, 3.0, 4.0],
+            bbox=[1, 2, 3, 4],
             iscrowd=0,
         )
         dataset.add_annotation(annotation=ann)
@@ -119,7 +119,7 @@ def test_annotation():
         category_id=1,
         segmentation=segmentation,
         area=10.0,
-        bbox=[1.0, 2.0, 3.0, 4.0],
+        bbox=[1, 2, 3, 4],
         iscrowd=0,
     )
 
