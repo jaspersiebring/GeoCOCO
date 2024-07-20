@@ -37,7 +37,7 @@ pandera = {extras = ["geopandas"], version = "^0.16.1"}
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.0"
 mypy = "^1.5.1"
-black = "^23.7.0"
+black = "^24.3.0"
 ruff = "^0.0.285"
 types-pycocotools = "^2.0.0.4"
 types-tqdm = "^4.66.0.2"
