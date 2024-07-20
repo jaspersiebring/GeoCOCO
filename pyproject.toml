@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "geococo"
-version = "0.5.5"
+version = "0.5.6"
 description = "Converts GIS annotations to Microsoft's Common Objects In Context (COCO) dataset format"
 authors = ["Jasper Siebring <j.siebring92@gmail.com>"]
 readme = "README.md"
@@ -52,8 +52,8 @@ jinja2 = "^3.1.4"
 requests = "^2.32.0"
 myst-parser = "^2.0.0"
 urllib3 = "^2.2.2"
-toml = "^0.10.2"
-types-toml = "^0.10.8.7"
+toml = "^0.10.1"
+types-toml = "^0.10.8.6"
 
 [[tool.mypy.overrides]]
 module = [
