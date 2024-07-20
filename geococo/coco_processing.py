@@ -170,7 +170,7 @@ def append_dataset(
                     continue
 
                 rle = cocomask.encode(np.asfortranarray(label_mask))
-                bounding_box = cv2.boundingRect(label_mask.astype(np.uint8))
+                bounding_box = list(cv2.boundingRect(label_mask.astype(np.uint8)))
                 area = np.sum(label_mask)
                 iscrowd = 1 if isinstance(window_label.geometry, MultiPolygon) else 0
 

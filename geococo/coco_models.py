@@ -173,7 +173,7 @@ class Annotation(BaseModel):
     category_id: int
     segmentation: RleDict
     area: float
-    bbox: List[float]
+    bbox: List[int]
     iscrowd: int
 
 
