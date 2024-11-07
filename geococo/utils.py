@@ -302,8 +302,8 @@ def update_labels(
 
     # Loading all given Category instances as a single dataframe
     category_pd = pd.DataFrame(
-        [category.dict() for category in categories],
-        columns=Category.schema()["properties"].keys(),
+        [category.model_dump() for category in categories],
+        columns=Category.model_json_schema()["properties"].keys(),
     )
 
     # Finding indices for matching values of a given attribute (name or id)

@@ -34,7 +34,7 @@ def test_labels_to_dataset_new_dataset(
         assert np.all(np.isin(dataset_class_names, labels_class_names))
 
         # Dumping to JSON
-        dst_json_data = dataset.json()
+        dst_json_data = dataset.model_dump_json()
         with open(json_path, "w") as dst_json_fp:
             dst_json_fp.write(dst_json_data)
 
@@ -75,7 +75,7 @@ def test_labels_to_dataset_append_dataset(
         assert np.all(np.isin(dataset_class_names, labels_class_ids.astype(str)))
 
         # Rerunning with existing CocoDataset to verify append
-        previous_dataset = dataset.copy(deep=True)
+        previous_dataset = dataset.model_copy(deep=True)
         previous_image_id = dataset.next_image_id - 1
         previous_annotation_id = dataset.next_annotation_id - 1
 
@@ -138,7 +138,7 @@ def test_labels_to_dataset_append_with_new_categories(
         assert np.all(np.isin(dataset_class_names, labels_class_names))
 
         # Rerunning with existing CocoDataset to verify append
-        previous_dataset = dataset.copy(deep=True)
+        previous_dataset = dataset.model_copy(deep=True)
         previous_image_id = dataset.next_image_id - 1
         previous_annotation_id = dataset.next_annotation_id - 1
 

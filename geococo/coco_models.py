@@ -4,9 +4,9 @@ import pathlib
 import pandas as pd
 from pandas import Series
 from datetime import datetime
-from typing import List, Optional, Dict, Any
-from typing_extensions import TypedDict
-from pydantic import BaseModel, root_validator
+from typing import List, Optional
+from typing_extensions import TypedDict, Self
+from pydantic import BaseModel, model_validator
 from pydantic.fields import Field
 from semver.version import Version
 
@@ -21,12 +21,12 @@ class CocoDataset(BaseModel):
     next_annotation_id: int = Field(default=1, exclude=True)
     next_source_id: int = Field(default=1, exclude=True)
 
-    @root_validator
-    def _set_ids(cls: CocoDataset, values: Dict[str, Any]) -> Dict[str, Any]:
-        values["next_image_id"] = len(values["images"]) + 1
-        values["next_annotation_id"] = len(values["annotations"]) + 1
-        values["next_source_id"] = len(values["sources"])
-        return values
+    @model_validator(mode="after")
+    def _set_ids(self) -> Self:
+        self.next_image_id = len(self.images) + 1
+        self.next_annotation_id = len(self.annotations) + 1
+        self.next_source_id = len(self.sources)
+        return self
 
     def add_annotation(self, annotation: Annotation) -> None:
         self.annotations.append(annotation)
@@ -65,8 +65,8 @@ class CocoDataset(BaseModel):
 
         # Loading all existing Category instances as a single dataframe
         category_pd = pd.DataFrame(
-            [category.dict() for category in self.categories],
-            columns=Category.schema()["properties"].keys(),
+            [category.model_dump() for category in self.categories],
+            columns=Category.model_json_schema()["properties"].keys(),
         )
 
         # checking if names can be assigned to uid_array (used to check duplicates)
@@ -97,9 +97,7 @@ class CocoDataset(BaseModel):
 
         # creating default supercategory_names if not given
         if super_names is None:
-            super_names = np.full(
-                shape=new_shape, fill_value=super_default
-            )  # type: ignore[assignment]
+            super_names = np.full(shape=new_shape, fill_value=super_default)  # type: ignore[assignment]
         else:
             super_names: np.ndarray = super_names.to_numpy()
             assert super_names.shape == original_shape
@@ -120,7 +118,7 @@ class CocoDataset(BaseModel):
         # ensuring equal size for category names and ids (if given)
         else:
             assert category_names.shape == original_shape  # type: ignore[union-attr]
-            category_names = category_names[indices][~member_mask] # type: ignore[index]
+            category_names = category_names[indices][~member_mask]  # type: ignore[index]
             category_ids = new_members
 
         # iteratively instancing and appending Category from set ids, names and supers
@@ -192,12 +190,3 @@ class Source(BaseModel):
     id: int
     file_name: pathlib.Path
     date_captured: datetime
-
-
-# Call update_forward_refs() to resolve forward references (for pydantic <2.0.0)
-CocoDataset.update_forward_refs()
-Info.update_forward_refs()
-Image.update_forward_refs()
-Annotation.update_forward_refs()
-Category.update_forward_refs()
-Source.update_forward_refs()

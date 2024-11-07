@@ -54,6 +54,6 @@ def save_dataset(dataset: CocoDataset, json_path: pathlib.Path) -> None:
     :param json_path: where to save the JSON-encoded CocoDataset instance to
     """
 
-    json_data = dataset.json()
+    json_data = dataset.model_dump_json()
     with open(json_path, mode="w", encoding="utf-8") as dst:
         dst.write(json_data)

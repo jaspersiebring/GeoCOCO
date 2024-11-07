@@ -125,7 +125,7 @@ def nonoverlapping_labels() -> gpd.GeoDataFrame:
 
 @pytest.fixture
 def test_raster(
-    raster_factory: Callable[[int, int, int, str, CRS, int], pathlib.Path]
+    raster_factory: Callable[[int, int, int, str, CRS, int], pathlib.Path],
 ) -> pathlib.Path:
     """Pytest fixture that generates a geotiff with given specifications, saves it to a
     temporary directory and returns its path.

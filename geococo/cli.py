@@ -24,7 +24,7 @@ def new(
             writable=True,
             resolve_path=True,
         ),
-    ]
+    ],
 ) -> None:
     """Initialize a new CocoDataset with user-prompted metadata"""
 
