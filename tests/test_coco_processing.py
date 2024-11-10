@@ -43,7 +43,7 @@ def test_labels_to_dataset_new_dataset(
             src_json_data = src_json_fp.read()
 
         # Reinstating CocoDataset from json and verifying if still identical
-        reinstated_dataset = CocoDataset.parse_raw(src_json_data)
+        reinstated_dataset = CocoDataset.model_validate_json(src_json_data)
         assert reinstated_dataset == dataset
 
 

@@ -292,7 +292,7 @@ def test_window_factory_boundless() -> None:
 
 def test_validate_labels(overlapping_labels: gpd.GeoDataFrame):
     # dropping everything except geometry
-    labels = overlapping_labels[["geometry"]]
+    labels = overlapping_labels[["geometry"]].copy()
     category_ids = np.arange(1, labels.index.size + 1)
     category_names = np.random.choice(list(ascii_lowercase), labels.index.size)
     supercategory_names = np.random.choice(list(ascii_lowercase), labels.index.size)
@@ -318,7 +318,7 @@ def test_validate_labels(overlapping_labels: gpd.GeoDataFrame):
 
 def test_validate_labels_only_ids(overlapping_labels: gpd.GeoDataFrame):
     # dropping everything except geometry
-    labels = overlapping_labels[["geometry"]]
+    labels = overlapping_labels[["geometry"]].copy()
     category_ids = np.arange(1, labels.index.size + 1)
     category_id_col = "category_ids"
     labels[category_id_col] = category_ids
@@ -331,7 +331,7 @@ def test_validate_labels_only_ids(overlapping_labels: gpd.GeoDataFrame):
 
 def test_validate_labels_id_casting(overlapping_labels: gpd.GeoDataFrame):
     # dropping everything except geometry
-    labels = overlapping_labels[["geometry"]]
+    labels = overlapping_labels[["geometry"]].copy()
     category_ids = np.arange(1, labels.index.size + 1).astype(float)
     category_id_col = "category_ids"
     labels[category_id_col] = category_ids
@@ -346,7 +346,7 @@ def test_validate_labels_id_casting(overlapping_labels: gpd.GeoDataFrame):
 
 def test_validate_labels_only_names(overlapping_labels: gpd.GeoDataFrame):
     # dropping everything except geometry
-    labels = overlapping_labels[["geometry"]]
+    labels = overlapping_labels[["geometry"]].copy()
     category_names = np.random.choice(list(ascii_lowercase), labels.index.size)
     category_name_col = "category_names"
     labels[category_name_col] = category_names
@@ -358,7 +358,7 @@ def test_validate_labels_only_names(overlapping_labels: gpd.GeoDataFrame):
 
 def test_validate_labels_invalid_geom(overlapping_labels: gpd.GeoDataFrame):
     # dropping everything except geometry
-    labels = overlapping_labels[["geometry"]]
+    labels = overlapping_labels[["geometry"]].copy()
     invalid_polygon = Polygon([(0, 0), (2, 0), (1, 1), (1, -1), (0, 0)])
     labels.loc[0, "geometry"] = invalid_polygon
 
@@ -385,7 +385,7 @@ def test_validate_labels_invalid_geom(overlapping_labels: gpd.GeoDataFrame):
 
 def test_validate_labels_invalid_range(overlapping_labels: gpd.GeoDataFrame):
     # dropping everything except geometry
-    labels = overlapping_labels[["geometry"]]
+    labels = overlapping_labels[["geometry"]].copy()
 
     category_ids = np.arange(labels.index.size)
     category_names = np.random.choice(list(ascii_lowercase), labels.index.size)
@@ -410,7 +410,7 @@ def test_validate_labels_invalid_range(overlapping_labels: gpd.GeoDataFrame):
 
 def test_validate_labels_invalid_type(overlapping_labels: gpd.GeoDataFrame):
     # dropping everything except geometry
-    labels = overlapping_labels[["geometry"]]
+    labels = overlapping_labels[["geometry"]].copy()
 
     category_ids = np.arange(1, labels.index.size + 1)
     category_names = category_ids
@@ -429,7 +429,7 @@ def test_validate_labels_invalid_type(overlapping_labels: gpd.GeoDataFrame):
 
 def test_update_labels(overlapping_labels):
     # dropping everything except geometry
-    labels = overlapping_labels[["geometry"]]
+    labels = overlapping_labels[["geometry"]].copy()
 
     # can be any name, as long as they contain validated values (see validate_labels)
     category_id_col = "ids"
@@ -467,7 +467,7 @@ def test_update_labels(overlapping_labels):
 
 def test_update_labels_ids(overlapping_labels):
     # dropping everything except geometry
-    labels = overlapping_labels[["geometry"]]
+    labels = overlapping_labels[["geometry"]].copy()
 
     # can be any name, as long as they contain validated values (see validate_labels)
     category_id_col = "ids"
@@ -504,7 +504,7 @@ def test_update_labels_ids(overlapping_labels):
 
 def test_update_labels_names(overlapping_labels):
     # dropping everything except geometry
-    labels = overlapping_labels[["geometry"]]
+    labels = overlapping_labels[["geometry"]].copy()
 
     # can be any name, as long as they contain validated values (see validate_labels)
     category_id_col = None
@@ -544,7 +544,7 @@ def test_update_labels_faulty(overlapping_labels):
     # be valid by other methods)
 
     # dropping everything except geometry
-    labels = overlapping_labels[["geometry"]]
+    labels = overlapping_labels[["geometry"]].copy()
 
     # can be any name, as long as they contain validated values (see validate_labels)
     category_id_col = "ids"
