@@ -31,9 +31,12 @@ def mask_label(
 
     if input_raster.closed:
         raise ValueError("Attempted mask with a closed DatasetReader")
+    
+    if not Polygon(box(*list(input_raster.bounds))).intersects(label):
+        a = 12
 
     label_mask, _ = riomask(
-        dataset=input_raster, shapes=[label], all_touched=True, filled=False
+        dataset=input_raster, shapes=[label], all_touched=False, filled=False, crop=False
     )
     label_mask = np.all(label_mask.mask, axis=0)
     label_mask = np.invert(label_mask)

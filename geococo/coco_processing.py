@@ -1,3 +1,9 @@
+# TODO make sure reshape_image is not naive (additional pixels are not always appended to x or y)
+# TODO check if padding is needed for intersect_window xwindow thingy
+# TODO verify height/width placement with non-square bounds (+ visualize with FiftyOne)
+# TODO do NOT change all_touched (keep to False)
+
+import os
 import cv2
 from pycocotools import mask as cocomask
 import pathlib
@@ -8,7 +14,7 @@ import rasterio
 from typing import Optional
 from rasterio.io import DatasetReader
 from rasterio.mask import mask as riomask
-from shapely.geometry import MultiPolygon
+from shapely.geometry import MultiPolygon, Polygon, box
 from tqdm import tqdm
 from geococo.coco_models import Annotation, CocoDataset, Image
 from geococo.utils import (
@@ -85,7 +91,14 @@ def append_dataset(
     )
 
     # Setting nodata and estimating window configuration
-    parent_window = window_intersect(input_raster=src, input_vector=labels)
+    parent_window = window_intersect(input_raster=src, input_vector=labels) # can start mid-pixel
+
+    # now from raster_window
+    from rasterio.windows import from_bounds
+    xraster_bounds = src.bounds
+    xraster_window = from_bounds(*xraster_bounds, transform=src.transform)
+    parent_window = xraster_window
+
     date_created = get_date_created(raster_source=src)
     nodata_value = src.nodata if src.nodata else 0
     coco_profile = src.profile.copy()
@@ -98,31 +111,39 @@ def append_dataset(
 
     # bumps major version if images_dir was not used in this dataset before
     dataset.verify_used_dir(images_dir=images_dir)
-
+    
     for child_window in tqdm(
-        window_factory(parent_window=parent_window, schema=schema), total=n_windows
-    ):
-        # changing window to Shapely.geometry, used to check for intersecting labels
-        window_geom = generate_window_polygon(datasource=src, window=child_window)
-        intersect_mask = labels.intersects(window_geom)
+        window_factory(parent_window=parent_window, schema=schema, boundless=False), total=n_windows
+    ):  
+        window_geom = generate_window_polygon(datasource=src, window=child_window) # problem is not here, with rasterio.mask
+        intersect_mask = labels.intersects(window_geom) #COMPARE src.bounds and window_bounds
         if not intersect_mask.any():
             continue
 
         # all_touched is needed because of np.ceil in WindowSource
         window_labels = labels[intersect_mask]
+
+        # high likelihood that all_touched should stay False, pad however
+        # padding might be necessary though if you turn parent_window = xraster_window back off
+        # padding might be needed because rasterio clips any mask to the extent of the source, doesn't have to follow the grid at all
         window_image, window_transform = riomask(
-            dataset=src, shapes=[window_geom], all_touched=True, crop=True
+            dataset=src, shapes=[window_geom], all_touched=False, crop=True, pad=False
         )
 
-        # padding is needed because rasterio clips any mask to the extent of the source
-        window_shape = (src.count, child_window.width, child_window.height)
+        window_shape = (src.count, child_window.height, child_window.width) 
+        something = False
+
         if window_image.shape != window_shape:
-            window_image = reshape_image(
-                img_array=window_image, shape=window_shape, padding_value=nodata_value
-            )
+            a = 12
+            # padding is naive but it can be at either sides, 
+            # reshaping is needed but the extra pixels can be around the original
+            # window_image = reshape_image(
+            #     img_array=window_image, shape=window_shape, padding_value=nodata_value
+            # )
 
         # normalizing values to uint8 range (i.e COCO dtype)
         if window_image.dtype != np.uint8:
+            # definitely not the cause, was already uint8
             window_image = cv2.normalize(
                 window_image,
                 None,
@@ -135,13 +156,12 @@ def append_dataset(
         # updating rasterio profile with window-specific values
         coco_profile.update(
             {
-                "width": window_image.shape[1],
-                "height": window_image.shape[2],
+                "width": window_image.shape[2],
+                "height": window_image.shape[1],
                 "transform": window_transform,
             }
         )
 
-        # saving window_image to disk (if it doesn't exist already)
         window_image_path = (
             images_dir / f"{dataset.next_source_id}_{child_window.col_off}_"
             f"{child_window.row_off}_{child_window.width}_{child_window.height}.jpg"
@@ -153,8 +173,8 @@ def append_dataset(
         # Instancing and adding Image model to dataset (also bumps next_image_id)
         image_instance = Image(
             id=dataset.next_image_id,
-            width=window_image.shape[1],
-            height=window_image.shape[2],
+            width=window_image.shape[2],
+            height=window_image.shape[1],
             file_name=window_image_path,
             source_id=dataset.next_source_id,
             date_captured=date_created,
@@ -162,6 +182,22 @@ def append_dataset(
 
         # Iteratively add Annotation models to dataset (also bumps next_annotation_id)
         with rasterio.open(window_image_path) as windowed_src:
+            windowed_geom = box(*list(windowed_src.bounds))
+            intersecting_labels = windowed_geom.intersects(window_labels.geometry)
+            
+            if intersecting_labels.any():
+                # some_window_path = str(window_image_path).replace(".jpg", ".gpkg")
+                # some_feats_path = some_window_path.replace(".gpkg", "feats.gpkg")
+                # gpd.GeoDataFrame(geometry=[window_geom], crs=labels.crs).to_file(some_window_path)
+                # window_labels[intersecting_labels].to_file(some_feats_path)
+                if intersecting_labels.sum() != intersect_mask.sum():
+                    a = 12
+                    some_window_path = str(window_image_path).replace(".jpg", ".gpkg")
+                    some_feats_path = some_window_path.replace(".gpkg", "feats.gpkg")
+                    gpd.GeoDataFrame(geometry=[window_geom], crs=labels.crs).to_file(some_window_path)
+                    window_labels[intersecting_labels].to_file(some_feats_path)
+        
+
             for _, window_label in window_labels.sort_values("id").iterrows():
                 label_mask = mask_label(
                     input_raster=windowed_src, label=window_label.geometry

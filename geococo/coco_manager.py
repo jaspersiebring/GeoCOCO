@@ -15,7 +15,7 @@ def load_dataset(json_path: pathlib.Path) -> CocoDataset:
 
     with open(json_path, mode="r", encoding="utf-8") as json_fp:
         json_data = json_fp.read()
-    dataset = CocoDataset.parse_raw(json_data)
+    dataset = CocoDataset.model_validate_json(json_data)
     return dataset
 
 
