@@ -8,9 +8,7 @@ from geococo.coco_manager import save_dataset, load_dataset, create_dataset
 from typing_extensions import Annotated
 from typing import Optional
 
-app = typer.Typer(
-    add_completion=False, help="Transform your GIS annotations into COCO datasets."
-)
+app = typer.Typer(add_completion=False, help="Transform your GIS annotations into COCO datasets.")
 
 
 @app.command()
@@ -24,7 +22,7 @@ def new(
             writable=True,
             resolve_path=True,
         ),
-    ]
+    ],
 ) -> None:
     """Initialize a new CocoDataset with user-prompted metadata"""
 
@@ -78,12 +76,10 @@ def copy(
             input(f"Dataset version ({dataset.info.version}): ") or dataset.info.version
         )
         dataset.info.description = input(
-            f"Dataset description ({dataset.info.description}): "
-            or dataset.info.description
+            f"Dataset description ({dataset.info.description}): " or dataset.info.description
         )
         dataset.info.contributor = input(
-            f"Dataset contributor ({dataset.info.contributor}): "
-            or dataset.info.contributor
+            f"Dataset contributor ({dataset.info.contributor}): " or dataset.info.contributor
         )
         dataset.info.date_created = datetime.now()
         print(f"Dataset date: {dataset.info.date_created}")

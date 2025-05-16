@@ -97,9 +97,7 @@ class CocoDataset(BaseModel):
 
         # creating default supercategory_names if not given
         if super_names is None:
-            super_names = np.full(
-                shape=new_shape, fill_value=super_default
-            )  # type: ignore[assignment]
+            super_names = np.full(shape=new_shape, fill_value=super_default)  # type: ignore[assignment]
         else:
             super_names: np.ndarray = super_names.to_numpy()
             assert super_names.shape == original_shape
@@ -120,7 +118,7 @@ class CocoDataset(BaseModel):
         # ensuring equal size for category names and ids (if given)
         else:
             assert category_names.shape == original_shape  # type: ignore[union-attr]
-            category_names = category_names[indices][~member_mask] # type: ignore[index]
+            category_names = category_names[indices][~member_mask]  # type: ignore[index]
             category_ids = new_members
 
         # iteratively instancing and appending Category from set ids, names and supers

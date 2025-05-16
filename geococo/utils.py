@@ -18,9 +18,7 @@ from geopandas.array import GeometryDtype  # type: ignore
 from geococo.coco_models import Category
 
 
-def mask_label(
-    input_raster: DatasetReader, label: Union[Polygon, MultiPolygon]
-) -> np.ndarray:
+def mask_label(input_raster: DatasetReader, label: Union[Polygon, MultiPolygon]) -> np.ndarray:
     """Masks out an label from input_raster and flattens it to a 2D binary array. If it
     doesn't overlap, the resulting mask will only consist of False bools.
 
@@ -32,18 +30,14 @@ def mask_label(
     if input_raster.closed:
         raise ValueError("Attempted mask with a closed DatasetReader")
 
-    label_mask, _ = riomask(
-        dataset=input_raster, shapes=[label], all_touched=True, filled=False
-    )
+    label_mask, _ = riomask(dataset=input_raster, shapes=[label], all_touched=True, filled=False)
     label_mask = np.all(label_mask.mask, axis=0)
     label_mask = np.invert(label_mask)
 
     return label_mask
 
 
-def window_intersect(
-    input_raster: DatasetReader, input_vector: gpd.GeoDataFrame
-) -> Window:
+def window_intersect(input_raster: DatasetReader, input_vector: gpd.GeoDataFrame) -> Window:
     """Generates a Rasterio Window from the intersecting extents of the input data. It
     also verifies if the input data share the same CRS and if they physically overlap.
 
@@ -66,9 +60,7 @@ def window_intersect(
     try:
         intersection_window = vector_window.intersection(raster_window)
     except WindowError as window_error:
-        raise ValueError(
-            "Extent of input raster and vector don't overlap"
-        ) from window_error
+        raise ValueError("Extent of input raster and vector don't overlap") from window_error
 
     return intersection_window
 
@@ -85,15 +77,11 @@ def reshape_image(
     """
 
     if len(img_array.shape) != len(shape):
-        raise ValueError(
-            f"Number of dimensions have to match ({img_array.shape} != {shape})"
-        )
+        raise ValueError(f"Number of dimensions have to match ({img_array.shape} != {shape})")
 
     img_array = img_array[: shape[0], : shape[1], : shape[2]]
     img_pads = [(0, max(0, n - img_array.shape[i])) for i, n in enumerate(shape)]
-    img_array = np.pad(
-        img_array, img_pads, mode="constant", constant_values=padding_value
-    )
+    img_array = np.pad(img_array, img_pads, mode="constant", constant_values=padding_value)
 
     return img_array
 
@@ -169,9 +157,7 @@ def window_factory(
         yield child_window
 
 
-def estimate_average_bounds(
-    gdf: gpd.GeoDataFrame, quantile: float = 0.9
-) -> Tuple[float, float]:
+def estimate_average_bounds(gdf: gpd.GeoDataFrame, quantile: float = 0.9) -> Tuple[float, float]:
     """Estimates the average size of all features in a GeoDataFrame.
 
     :param gdf: GeoDataFrame that contains all features (i.e. shapely.Geometry objects)
@@ -308,13 +294,11 @@ def update_labels(
 
     # Finding indices for matching values of a given attribute (name or id)
     if id_attribute in labels.columns:
-        indices = np.where(
-            labels[id_attribute].values.reshape(-1, 1) == category_pd.id.values
-        )[1]
+        indices = np.where(labels[id_attribute].values.reshape(-1, 1) == category_pd.id.values)[1]
     elif name_attribute in labels.columns:
-        indices = np.where(
-            labels[name_attribute].values.reshape(-1, 1) == category_pd.name.values
-        )[1]
+        indices = np.where(labels[name_attribute].values.reshape(-1, 1) == category_pd.name.values)[
+            1
+        ]
     else:
         raise AttributeError("At least one category attribute must be present")
 
