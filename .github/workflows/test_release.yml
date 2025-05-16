@@ -5,26 +5,30 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Check out repository code
-        uses: actions/checkout@v3
-      - name: Installing Poetry globally
-        run: pipx install poetry
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Installing UV
+        uses: astral-sh/setup-uv@v5
+
       - name: Installing Python
-        id: setup-python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: 3.8
-          cache: poetry
-      - name: Installing Poetry environment
-        run: poetry install      
-      - name: Build source and .whl archives with Poetry
+          python-version-file: ".python-version"
+          
+      - name: Verifying dependencies
+        id: lock
+        run: uv lock --check
+        
+      - name: Installing dependencies
+        id: sync
+        run: uv sync --all-extras --dev
+
+      - name: Build package
         id: build
-        run: poetry build
-      - name: Authorize GitHub Actions to publish on TestPYPI
-        run: |
-          poetry config repositories.test-pypi https://test.pypi.org/legacy/
-          poetry config pypi-token.test-pypi  ${{ secrets.TESTPYPI_API_TOKEN }}
-        if: steps.build.outcome == 'success'
-      - name: Publish on TestPYPI
-        run: poetry publish -r test-pypi
+        run: uv build
+        if: steps.lock.outcome == 'success' && steps.sync.outcome == 'success'
+        
+      - name: Publish package
+        run: uv publish --token ${{ secrets.TESTPYPI_API_TOKEN }} --index testpypi
         if: steps.build.outcome == 'success'

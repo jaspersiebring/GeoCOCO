@@ -1,6 +1,0 @@
-name: geococo
-channels:
-  - conda-forge
-dependencies:
-  - python>=3.10
-  - poetry>=1.5
