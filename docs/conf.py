@@ -26,13 +26,18 @@ version = release = meta_info["project"]["version"]
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
-
 extensions = [
     "sphinx.ext.autodoc",
-    "sphinx.ext.viewcode",
+    "sphinx_autodoc_typehints",
     "sphinx.ext.autosummary",
+    "sphinx.ext.viewcode",
     "myst_parser",
 ]
+
+autodoc_typehints = "description"
+autodoc_typehints_format = "short"
+autodoc_typehints_use_signature_return = True
+autodoc_typehints_use_signature = True
 
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
