@@ -9,10 +9,10 @@ build:
       - curl -LsSf https://astral.sh/uv/install.sh | sh
       
     post_install:
-      - uv sync --all-extras --dev
+      - $HOME/.local/bin/uv sync --all-extras --dev
       
     pre_build:
-     - uv run sphinx-apidoc -o docs/ geococo/
+     - $HOME/.local/bin/uv run sphinx-apidoc -o docs/ geococo/
 
 sphinx:
   configuration: docs/conf.py
