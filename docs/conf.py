@@ -19,10 +19,10 @@ meta_info = toml.load(meta_path)
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = meta_info["tool"]["poetry"]["name"]
+project = meta_info["project"]["name"]
 copyright = f"{datetime.now().year}, Jasper Siebring"
 author = "Jasper Siebring"
-version = release = meta_info["tool"]["poetry"]["version"]
+version = release = meta_info["project"]["version"]
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
