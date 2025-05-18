@@ -1,6 +1,6 @@
 [project]
 name = "geococo"
-version = "0.6.1"
+version = "0.7.0"
 description = "Converts GIS annotations to Microsoft's Common Objects In Context (COCO) dataset format"
 authors = [
     {name = "Jasper Siebring", email = "j.siebring92@gmail.com"},
@@ -23,6 +23,11 @@ dependencies = [
 
 [project.scripts]
 geococo = "geococo.cli:app"
+
+[project.optional-dependencies]
+fiftyone = [
+    "fiftyone>=1.5.2",
+]
 
 [build-system]
 requires = ["hatchling"]
