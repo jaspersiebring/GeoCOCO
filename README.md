@@ -149,7 +149,8 @@ save_dataset(dataset=dataset, json_path=json_path)
 ````
 
 # Visualization with FiftyOne
-Like the official COCO project, the open source tool [FiftyOne](https://docs.voxel51.com/) can be used to visualize and evaluate your datasets. To do this, you'll need the `fiftyone` and `pycocotools` packages. Note that `geococo` does not install `fiftyone` by default, so you'll need to install it separately (instructions for installation can be found [here](https://docs.voxel51.com/getting_started/install.html)). Once you have `fiftyone` installed, you can use the following command to inspect your COCO dataset in your web browser.
+Like the official COCO project, the open source tool [FiftyOne](https://docs.voxel51.com/) can be used to visualize and evaluate your datasets. Note that `geococo` does not include `fiftyone` by default but it can be installed by running 
+`pip install geococo[fiftyone]`. Once installed, the following commands can be used to inspect your COCO dataset in your web browser.
 
 ````
 # requires pycocotools and fiftyone
