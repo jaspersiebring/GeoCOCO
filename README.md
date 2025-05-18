@@ -1,7 +1,7 @@
 ![geococo logo](https://github.com/jaspersiebring/GeoCOCO/assets/25051531/b2a2db16-1400-4c43-b044-a924a378ef84)
 
 [![PyPI](https://img.shields.io/pypi/v/geococo)](https://pypi.org/project/geococo/)
-![PyPI - Python Version](https://img.shields.io/pypi/pyversions/geococo)
+![python-version-from-pep-621-toml](https://img.shields.io/python/required-version-toml?tomlFilePath=https%3A%2F%2Fraw.githubusercontent.com%2Fjaspersiebring%2FGeoCOCO%2Frefs%2Fheads%2Fmain%2Fpyproject.toml)
 [![Build passing](https://github.com/jaspersiebring/GeoCOCO/actions/workflows/main.yml/badge.svg)](https://github.com/jaspersiebring/GeoCOCO/actions/workflows/main.yml)
 [![Documentation Status](https://readthedocs.org/projects/geococo/badge/?version=latest)](https://geococo.readthedocs.io/en/latest/?badge=latest)
 

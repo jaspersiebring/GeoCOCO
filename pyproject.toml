@@ -1,6 +1,6 @@
 [project]
 name = "geococo"
-version = "0.6.0"
+version = "0.6.1"
 description = "Converts GIS annotations to Microsoft's Common Objects In Context (COCO) dataset format"
 authors = [
     {name = "Jasper Siebring", email = "j.siebring92@gmail.com"},
