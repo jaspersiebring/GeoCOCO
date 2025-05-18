@@ -14,8 +14,6 @@ build:
       - uv sync --all-extras --dev 
     build:
       html:
-        - uv run sphinx-apidoc -o docs/ geococo/
-        - uv run sphinx-autogen docs/index.rst
-        - uv run sphinx-build -T -b html docs $READTHEDOCS_OUTPUT/html
+        - uv run sphinx-build -T -b html docs/source $READTHEDOCS_OUTPUT/html
 sphinx:
   configuration: docs/conf.py
