@@ -1,13 +1,16 @@
 import warnings
 from rasterio.errors import NotGeoreferencedWarning
-from .coco_processing import append_dataset
-from .coco_manager import create_dataset, load_dataset, save_dataset
+from .coco_processing import append_dataset as append_dataset
+from .coco_manager import (
+    create_dataset as create_dataset,
+    load_dataset as load_dataset,
+    save_dataset as save_dataset,
+)
 
 # We make this specific warning 'catchable' to ensure that all rasterio clips are valid
 warnings.filterwarnings(
     "error",
-    "shapes are outside bounds of raster. Are they in different coordinate reference "
-    "systems?",
+    "shapes are outside bounds of raster. Are they in different coordinate reference systems?",
     category=UserWarning,
 )
 

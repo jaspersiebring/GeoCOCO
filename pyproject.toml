@@ -1,82 +1,126 @@
-[tool.poetry]
+[project]
 name = "geococo"
-version = "0.5.5"
+version = "0.6.0"
 description = "Converts GIS annotations to Microsoft's Common Objects In Context (COCO) dataset format"
-authors = ["Jasper Siebring <j.siebring92@gmail.com>"]
+authors = [
+    {name = "Jasper Siebring", email = "j.siebring92@gmail.com"},
+]
 readme = "README.md"
-repository = "https://github.com/jaspersiebring/GeoCOCO"
-homepage = "https://geococo.readthedocs.io/"
+requires-python = ">=3.9"
 keywords = ["coco", "annotation", "deep-learning", "gis", "qgis", "arcgis", "labeling", "ai", "yolo"]
-packages = [
-    {include = "geococo"}
+dependencies = [
+    "rasterio>=1.3.8",
+    "geopandas>=0.13.2",
+    "opencv-python-headless>=4.8.0.76",
+    "pycocotools>=2.0.7",
+    "pydantic>=1.10.13,<2.0",
+    "tqdm>=4.66.3",
+    "typing-extensions>=4.7.1",
+    "typer>=0.9.0",
+    "semver>=3.0.1",
+    "pandera[geopandas]>=0.16.1",
 ]
 
-[tool.poetry.scripts]
+[project.scripts]
 geococo = "geococo.cli:app"
 
-[tool.poetry.dependencies]
-python = "^3.9"
-rasterio = "^1.3.8"
-setuptools = "^70.0.0"
-geopandas = "^0.13.2"
-fiona = "^1.10b2"
-certifi = "^2024.07.04"
-zipp = "^3.19.1"
-opencv-python-headless = "^4.8.0.76"
-pycocotools = "^2.0.7"
-pillow = "^10.3.0"
-pydantic = "^1.10.13"
-fonttools = "^4.43.0"
-tqdm = "^4.66.3"
-typing-extensions = "^4.7.1"
-typer = "^0.9.0"
-semver = "^3.0.1"
-numpy = "<2.0.0"
-pandera = {extras = ["geopandas"], version = "^0.16.1"}
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
-[tool.poetry.group.dev.dependencies]
-pytest = "^7.4.0"
-mypy = "^1.5.1"
-black = "^23.7.0"
-ruff = "^0.0.285"
-types-pycocotools = "^2.0.0.4"
-types-tqdm = "^4.66.0.2"
-docformatter = {extras = ["tomli"], version = "^1.7.5"}
-pytest-cov = "^4.1.0"
-pandas-stubs = "^2.0.3.230814"
-types-python-dateutil = "^2.8.19.14"
-sphinx = "^7.2.6"
-sphinx-rtd-theme = "^1.3.0"
-idna = "^3.7"
-jinja2 = "^3.1.4"
-requests = "^2.32.0"
-myst-parser = "^2.0.0"
-urllib3 = "^2.2.2"
-toml = "^0.10.2"
-types-toml = "^0.10.8.7"
-
-[[tool.mypy.overrides]]
-module = [
-    "rasterio.*",
-    "geopandas",
-    "shapely.*"
+[dependency-groups]
+dev = [
+    "pytest>=7.4.0",
+    "mypy>=1.5.1",
+    "ruff>=0.11.5",
+    "sphinx>=7.2.6",
+    "sphinx-rtd-theme>=1.3.0",
+    "myst-parser>=2.0.0",
+    "toml>=0.10.2",
+    "sphinx-autoapi>=3.6.0",
 ]
 
-[tool.mypy]
-ignore_missing_imports = true
-allow_redefinition = true
-strict_optional = false
-disable_error_code = 'no-redef'
-
 [tool.ruff]
-line-length = 88
+# Exclude a variety of commonly ignored directories.
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".ipynb_checkpoints",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pyenv",
+    ".pytest_cache",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    ".vscode",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "site-packages",
+    "venv",
+]
 
-[tool.ruff.per-file-ignores]
-"geococo/__init__.py" = ["F401"]
+# Same as Black.
+line-length = 100
+indent-width = 4
 
-[tool.docformatter]
-black = true
+[tool.ruff.lint]
+# Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`)  codes by default.
+# Unlike Flake8, Ruff doesn't enable pycodestyle warnings (`W`) or
+# McCabe complexity (`C901`) by default.
+select = ["E4", "E7", "E9", "F"]
+ignore = []
 
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+# Allow fix for all enabled rules (when `--fix`) is provided.
+fixable = ["ALL"]
+unfixable = []
+
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[tool.ruff.format]
+# Like Black, use double quotes for strings.
+quote-style = "double"
+
+# Like Black, indent with spaces, rather than tabs.
+indent-style = "space"
+
+# Like Black, respect magic trailing commas.
+skip-magic-trailing-comma = false
+
+# Like Black, automatically detect the appropriate line ending.
+line-ending = "auto"
+
+# Enable auto-formatting of code examples in docstrings. Markdown,
+# reStructuredText code/literal blocks and doctests are all supported.
+docstring-code-format = true
+
+# Set the line length limit used when formatting code snippets in
+# docstrings.
+#
+# This only has an effect when the `docstring-code-format` setting is
+# enabled.
+docstring-code-line-length = "dynamic"
+
+[[tool.uv.index]]
+name = "testpypi"
+url = "https://test.pypi.org/simple"
+publish-url = "https://test.pypi.org/legacy/"
+explicit = true
+
+[[tool.uv.index]]
+name = "pypi"
+url = "https://pypi.org/simple"
+publish-url = "https://upload.pypi.org/legacy/"
+default = true

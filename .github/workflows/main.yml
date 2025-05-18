@@ -1,84 +1,97 @@
 name: Test and release
 on:
-  pull_request: # Pull request events (default: open, synchronized, reopened) in any branch triggers the workflow.
+  pull_request:
   push:
     branches:
-      - main # Pushes to main (i.e. after a merged PR)
+      - main
+
 jobs:
-  build:
+  pypi_release:
+    name: "Releasing on PyPI"
     runs-on: ubuntu-latest
     steps:
-      - name: Check out repository code
-        uses: actions/checkout@v3
-      - name: Installing Poetry globally
-        run: pipx install poetry
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Installing UV
+        uses: astral-sh/setup-uv@v5
+
       - name: Installing Python
-        id: setup-python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: 3.8
-          cache: poetry
-      - name: Installing Poetry environment
-        run: poetry install
-      - name: Setting tag to package version
+          python-version-file: ".python-version"
+          
+      - name: Verifying dependencies
+        id: lock
+        run: uv lock --check
+        
+      - name: Installing dependencies
+        id: sync
+        run: uv sync --all-extras --dev
+
+      - name: Running pytest
+        id: test
+        run: uv run pytest
+
+      - name: Running linter
+        id: lint
+        run: uv run ruff check geococo --output-format=github
+             
+      - name: Running formatter
+        id: format
+        run: uv run ruff format geococo --diff
+            
+      # - name: Running type checker
+      #   id: type
+      #   run: uv run mypy geococo
+      # - name: Checking code coverage
+      #   id: coverage
+      #   run: uv run pytest --cov=geococo --cov-fail-under=75
+
+      - name: Parsing info
+        id: info
         shell: bash
         run: |
-          echo "RELEASE_NAME=$(poetry version | tr ' ' '-')" >> $GITHUB_ENV
-          echo "RELEASE_VERSION=$(poetry version -s)" >> $GITHUB_ENV
-          
-      - name: Running pytest
-        id: pytest
-        run: poetry run pytest -v
-      - name: Running mypy
-        id: mypy
-        run: poetry run mypy geococo/ tests/
-      - name: Running ruff
-        id: ruff
-        run: poetry run ruff geococo/ tests/
-      - name: Checking code coverage
-        id: coverage
-        run: poetry run pytest --cov=geococo --cov-fail-under=75
-      
-      - name: Build source and .whl archives with Poetry
-        id: build
-        run: poetry build
-        if: steps.pytest.outcome == 'success' && steps.mypy.outcome == 'success' && steps.ruff.outcome == 'success' && steps.coverage.outcome == 'success' && github.event_name == 'push'
+          echo "RELEASE_NAME=$(uv run python -c "import toml; print(toml.load('pyproject.toml')['project']['name'])")" >> $GITHUB_ENV
+          echo "RELEASE_VERSION=$(uv run python -c "import toml; print(toml.load('pyproject.toml')['project']['version'])")" >> $GITHUB_ENV
 
-      - name: Authorize GitHub Actions to publish on PYPI
-        run: poetry config pypi-token.pypi ${{ secrets.PYPI_API_TOKEN }}
-        if: steps.build.outcome == 'success'
-      - name: Publish on PYPI
-        run: poetry publish
-        if: steps.build.outcome == 'success'
-      
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v3
-        if: steps.build.outcome == 'success'
+      - name: Build package
+        id: build
+        run: uv build
+        if: steps.lock.outcome == 'success' && steps.sync.outcome == 'success' && steps.test.outcome == 'success' && steps.lint.outcome == 'success' && steps.format.outcome == 'success' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        
+      - name: Publish package
+        run: uv publish --token ${{ secrets.PYPI_API_TOKEN }}
+        if: steps.build.outcome == 'success' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+      - name: Publish artifacts
+        uses: actions/upload-artifact@v4
+        if: steps.build.outcome == 'success' && github.event_name == 'push' && github.ref == 'refs/heads/main'
         with:
           name: ${{ env.RELEASE_NAME }}
           path: dist/*
-              
+
     outputs:
       RELEASE_NAME: ${{ env.RELEASE_NAME }}
       RELEASE_VERSION: ${{ env.RELEASE_VERSION }}
       PASSED_BUILD: ${{ steps.build.outcome }}
 
-  release:
-    needs: build
+  github_release:
+    name: "Releasing on Github"
+    needs: pypi_release
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
-      - name: Collect all artifacts
-        uses: actions/download-artifact@v3
+      - name: Collect artifacts
+        uses: actions/download-artifact@v4
         id: collect
-        if: ${{ needs.build.outputs.PASSED_BUILD }} == 'success'
-      - name: Upload all artifacts to Github 
-        uses: softprops/action-gh-release@v1
+        if: ${{ needs.pypi_release.outputs.PASSED_BUILD }} == 'success'
+
+      - name: Upload artifacts 
+        uses: softprops/action-gh-release@v2
         if: steps.collect.outcome == 'success'
         with:
-          files: ${{ needs.build.outputs.RELEASE_NAME }}/*
-          tag_name: ${{ needs.build.outputs.RELEASE_VERSION }}
+          files: ${{ needs.pypi_release.outputs.RELEASE_NAME }}/*
+          tag_name: ${{ needs.pypi_release.outputs.RELEASE_VERSION }}
           generate_release_notes: true
           prerelease: false
-        
-

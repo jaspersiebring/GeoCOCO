@@ -3,39 +3,45 @@
 # For the full list of built-in configuration values, see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
-import os
-import sys
 import toml
 import pathlib
 from datetime import datetime
 
-# Appending project root to PATH
-sys.path.insert(0, os.path.abspath(".."))
-
-# Getting package version from pyproject toml
-meta_path = pathlib.Path(__file__).parents[1] / "pyproject.toml"
+PROJECT_ROOT = pathlib.Path(__file__).parents[2]
+meta_path = PROJECT_ROOT / "pyproject.toml"
 meta_info = toml.load(meta_path)
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = meta_info["tool"]["poetry"]["name"]
-copyright = f"{datetime.now().year}, Jasper Siebring"
+project = meta_info["project"]["name"]
+release = version = release = meta_info["project"]["version"]
 author = "Jasper Siebring"
-version = release = meta_info["tool"]["poetry"]["version"]
+copyright = f"{datetime.now().year}, {author}"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
-
 extensions = [
     "sphinx.ext.autodoc",
+    "autoapi.extension",
+    "sphinx.ext.intersphinx",
     "sphinx.ext.viewcode",
-    "sphinx.ext.autosummary",
-    "myst_parser",
+    "myst_parser"
 ]
+suppress_warnings = ["autoapi"]
+autodoc_typehints = "description"
+autoapi_own_page_level = "module"
+autoapi_add_toctree_entry = False
+intersphinx_mapping = {
+    "python": ("https://docs.python.org/3.9", None),
+    "rasterio": ("https://rasterio.readthedocs.io/en/latest/", None),
+    "geopandas": ("https://geopandas.org/en/stable/", None),
+    "pydantic": ("https://docs.pydantic.dev/latest/", None),
+}
 
 templates_path = ["_templates"]
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
+exclude_patterns = []
+autoapi_dirs = [str(PROJECT_ROOT / project)]
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
